@@ -162,17 +162,25 @@ public class RailwayBot extends TelegramLongPollingBot {
             answerCallbackQuery(callbackQuery, "Сессия истекла. Начните поиск заново.");
             return;
         }
-
+// Кайкой-то коммент для комита
+        // Ага здесь что-то поменял и все в шоке
         if(data.startsWith("dep_")){
             String selectionStation = data.substring("dep_".length());
             session.setDepartureStation(selectionStation);
             session.setCurrentStep(UserSession.Step.WAITING_FOR_ARRIVAL);
             userSessions.put(chatId,session);
 
-            // Очищаем поле и вводим выбранную станцию
-            seleniumService.selectStation(selectionStation,true);
+            try{
+                // Очищаем поле и вводим выбранную станцию
+                seleniumService.selectStation(selectionStation,true);
 
-            editMessageWithNewText(callbackQuery,"Выбрано отправление: "+ selectionStation+ "\nТеперь введите город прибытия.");
+                editMessageWithNewText(callbackQuery,"Выбрано отправление: "+ selectionStation+ "\nТеперь введите город прибытия.");
+            }
+            catch (Exception e){
+                editMessageWithNewText(callbackQuery,"❌ Ошибка при выборе станции. Попробуйте еще раз.");
+                e.printStackTrace();
+            }
+
         }
         else if (data.startsWith("arr_")) {
             String selectedStation = data.substring("arr_".length());
@@ -181,11 +189,18 @@ public class RailwayBot extends TelegramLongPollingBot {
             session.setCurrentCalendarMonth(LocalDate.now().withDayOfMonth(1));
             userSessions.put(chatId,session);
 
-            // Очищаем поле и вводим выбранную станцию
-            seleniumService.selectStation(selectedStation,false);
+            try {
+                // Очищаем поле и вводим выбранную станцию
+                seleniumService.selectStation(selectedStation,false);
 
-            editMessageWithNewText(callbackQuery,"Выбрано прибытие: "+selectedStation);
-            sendCalendar(chatId,"Выберите дату поездки:",session);
+                editMessageWithNewText(callbackQuery,"Выбрано прибытие: "+selectedStation);
+                sendCalendar(chatId,"Выберите дату поездки:",session);
+            }
+            catch (Exception e){
+                editMessageWithNewText(callbackQuery,"❌ Ошибка при выборе станции. Попробуйте еще раз.");
+                e.printStackTrace();
+            }
+
         }
         else if (data.startsWith("date_")) {
             String selectedDate = data.substring("date_".length());

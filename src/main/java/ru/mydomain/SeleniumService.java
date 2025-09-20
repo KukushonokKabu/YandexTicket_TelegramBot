@@ -47,22 +47,38 @@ public class SeleniumService {
 
             // Ждём появления подсказок
             WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(5));
-            By suggestionLocator = By.xpath(xpath.getSuggestionStation());
+            By suggestionLocator = By.xpath("//div[@class='GxV0a']");
             wait.until(ExpectedConditions.visibilityOfElementLocated(suggestionLocator));
             Thread.sleep(1000);
 
             // Собираем текст подсказок
-            List<WebElement>suggestionElements = driver.findElements(suggestionLocator);
+            List<WebElement>cityElements = driver.findElements(suggestionLocator);
             // Собираем текст всех подсказок пока они не стали устаревшими :-)
             List<String>suggestions = new ArrayList<>();
 
-            for(WebElement element : suggestionElements){
+            for(WebElement cityElement : cityElements){
                 try {
-                    String text = element.getText();
-                            if(!text.trim().isEmpty()){
-                                suggestions.add(text);
-                                if (suggestions.size()>=5)break;//Ограничиваемся 5 подсказками
-                            }
+                    String cityText = cityElement.getText().trim();
+                            if(cityText.isEmpty())continue;
+
+                            // Ищем дополнительную информацию
+                    String additionalInfo="";
+                    // Поиск информации в том же контейнере
+                    try {
+                        // Ищем родительский контейнер , затем в нем дополнительную информацию
+                        WebElement parentContainer = cityElement.findElement(By.xpath("./ancestor::div[contains(@class, 'EhCXF') or contains(@class, '_274Q5')][1]"));
+                        List<WebElement>infoElements = parentContainer.findElements(By.xpath(".//div[@class='tbbhG']"));
+                        if(!infoElements.isEmpty()){
+                            additionalInfo = " ("+ infoElements.get(0).getText().trim()+")";
+                        }
+                    }
+                    catch (Exception e){
+                        // Если не нашли дополнительной информации - это норммально
+                    }
+                    String fullSuggestion = cityText + additionalInfo;
+                    suggestions.add(fullSuggestion);
+
+                    if(suggestions.size()>=5) break;
                 }
                 catch (StaleElementReferenceException e){
                     // Если элемент устарел пропускаем его.
@@ -85,19 +101,39 @@ public class SeleniumService {
             cityArrival.sendKeys(query);
 
             // Ждём появления подсказок
-            By suggestionArrivalLocator = By.xpath(xpath.getSuggestionStation());
+            By suggestionLocator = By.xpath("//div[@class='GxV0a']");
             WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(5));
-            wait.until(ExpectedConditions.visibilityOfElementLocated(suggestionArrivalLocator));
+            wait.until(ExpectedConditions.visibilityOfElementLocated(suggestionLocator));
             Thread.sleep(1000);
 
             // Собираем текст подсказок
-            List<WebElement>suggestionArrival = driver.findElements(By.xpath(xpath.getSuggestionStation()));
-            List<String>suggestionArrivalText = new ArrayList<>();
+            List<WebElement>cityElements = driver.findElements((suggestionLocator));
+            List<String>suggestions = new ArrayList<>();
 
-            for(WebElement element : suggestionArrival){
+            for(WebElement cityElement : cityElements){
                 try {
-                    suggestionArrivalText.add(element.getText());
-                    if(suggestionArrivalText.size()>=5)break;// Ограничиваемся 5 подсказками
+                    String cityText = cityElement.getText().trim();
+                    if(cityText.isEmpty())continue;
+
+                    String additionalInfo = "";
+
+                    //  Поиск дополнительной информации для этого города
+                    try {
+                        WebElement parentContainer = cityElement.findElement(By.xpath("./ancestor::div[contains(@class, 'EhCXF') or contains(@class, '_274Q5')][1]"));
+                        List<WebElement>infoElements = parentContainer.findElements(By.xpath(".//div[@class='tbbhG']"));
+
+                        if(!infoElements.isEmpty()){
+                            additionalInfo = " ("+ infoElements.get(0).getText().trim()+")";
+                        }
+                    }
+                    catch (Exception e){
+                        // Дополнительная информация не найдена  - пропускаем
+                    }
+                    String fullSuggestion = cityText + additionalInfo;
+                    suggestions.add(fullSuggestion);
+
+                    if(suggestions.size()>=5) break;
+
                 }
                 catch (StaleElementReferenceException e){
                     // Если элемент устарел пропускаем его
@@ -106,7 +142,7 @@ public class SeleniumService {
 
 
             }
-            return suggestionArrivalText;
+            return suggestions;
 
         }
         catch (Exception e){
@@ -122,20 +158,30 @@ public class SeleniumService {
             // Сначала очищаем
             clearFields();
 
+            //  Извлекаем только основное название станций(без доп информации)
+            String cleanStationName = stationName.split("\\s*\\(")[0].trim();
+
+
+
             if(isDeparture){
                 // Очищаем поле  "Откуда" и вводим выбранную станцию
                 WebElement cityDeparture = driver.findElement(By.xpath(xpath.getTextFieldOut()));
                 WebElement clearButton = driver.findElement(By.xpath(xpath.getButtonClear()));
                 clearButton.click();
-                cityDeparture.sendKeys(stationName);
+                cityDeparture.sendKeys(cleanStationName);
 
                 // Ждем появления подсказок и кликаем на нужную
-                By suggestionLocator = By.xpath(xpath.getSuggestionStation());
+                By suggestionLocator = By.xpath("//div[@class='GxV0a']");
                 wait.until(ExpectedConditions.visibilityOfElementLocated(suggestionLocator));
+                Thread.sleep(1000);
 
                 //Находим и кликаем на элемент с нужным текстом
-                WebElement exactSuggestion = driver.findElement(By.xpath(xpath.getSuggestionStation()+"[text()='" + stationName+ "']"));
+                WebElement exactSuggestion = driver.findElement(
+                        By.xpath("//div[@class='GxV0a'][contains(text(), '" + cleanStationName + "')]")
+                );
                 exactSuggestion.click();
+                wait.until(ExpectedConditions.attributeContains(cityDeparture,"value",cleanStationName));
+                Thread.sleep(1000);
 
 
             }
@@ -144,7 +190,7 @@ public class SeleniumService {
                 WebElement cityArrival = driver.findElement(By.xpath(xpath.getTextFieldIn()));
                 cityArrival.click();
                 cityArrival.clear();
-                cityArrival.sendKeys(stationName);
+                cityArrival.sendKeys(cleanStationName);
 
                 //  Ждем появления подсказок и кликаем на нужную
                 By suggestionLocator =  By.xpath(xpath.getSuggestionStation());
@@ -153,7 +199,9 @@ public class SeleniumService {
                 Thread.sleep(1000);
 
                 // Находим и кликаем на элемент с нужным текстом
-                WebElement exactSuggestion = driver.findElement(By.xpath(xpath.getSuggestionStation()+"[contains(text(), '" + stationName+ "')]"));
+                WebElement exactSuggestion = driver.findElement(
+                        By.xpath("//div[@class='GxV0a'][contains(text(), '" + cleanStationName + "')]")
+                );
                 exactSuggestion.click();
 
 
