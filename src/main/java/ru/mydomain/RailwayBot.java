@@ -162,19 +162,17 @@ public class RailwayBot extends TelegramLongPollingBot {
             answerCallbackQuery(callbackQuery, "Сессия истекла. Начните поиск заново.");
             return;
         }
-// Кайкой-то коммент для комита
-        // Ага здесь что-то поменял и все в шоке
         if(data.startsWith("dep_")){
-            String selectionStation = data.substring("dep_".length());
-            session.setDepartureStation(selectionStation);
+            String selectedStation = data.substring("dep_".length());
+            session.setDepartureStation(selectedStation);
             session.setCurrentStep(UserSession.Step.WAITING_FOR_ARRIVAL);
             userSessions.put(chatId,session);
 
             try{
                 // Очищаем поле и вводим выбранную станцию
-                seleniumService.selectStation(selectionStation,true);
+                seleniumService.selectStation(selectedStation,true);
 
-                editMessageWithNewText(callbackQuery,"Выбрано отправление: "+ selectionStation+ "\nТеперь введите город прибытия.");
+                editMessageWithNewText(callbackQuery,"Выбрано отправление: "+ selectedStation+ "\nТеперь введите город прибытия.");
             }
             catch (Exception e){
                 editMessageWithNewText(callbackQuery,"❌ Ошибка при выборе станции. Попробуйте еще раз.");

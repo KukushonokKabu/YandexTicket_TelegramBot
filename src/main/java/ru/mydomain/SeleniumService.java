@@ -171,7 +171,7 @@ public class SeleniumService {
                 cityDeparture.sendKeys(cleanStationName);
 
                 // Ждем появления подсказок и кликаем на нужную
-                By suggestionLocator = By.xpath("//div[@class='GxV0a']");
+                By suggestionLocator = By.xpath("//div[@class='GxV0a']");// Сам город
                 wait.until(ExpectedConditions.visibilityOfElementLocated(suggestionLocator));
                 Thread.sleep(1000);
 
