@@ -112,7 +112,7 @@ public class RailwayBot extends TelegramLongPollingBot {
                     sendTextMessage(chatId, "Ищу варианты...", false);
                     // Сначала очищаем предыдущие значения
                     seleniumService.clearFields();
-                    List<String> departureSuggestions = seleniumService.getStationSuggestionsDeparture(messageText);
+                    List<ElementInfo> departureSuggestions = seleniumService.getStationSuggestionsDeparture(messageText);
 
                     if (departureSuggestions.isEmpty()) {
                         sendTextMessage(chatId, "Ничего не найдено. Попробуйте другой город.", false);
@@ -133,7 +133,7 @@ public class RailwayBot extends TelegramLongPollingBot {
             case WAITING_FOR_ARRIVAL:
                 try {
                     sendTextMessage(chatId,"Ищу варианты прибытия...",false);
-                    List<String>arrivalSuggestions = seleniumService.getStationSuggestionsArrival(messageText);
+                    List<ElementInfo>arrivalSuggestions = seleniumService.getStationSuggestionsArrival(messageText);
                     if(arrivalSuggestions.isEmpty()){
                         sendTextMessage(chatId,"Ничего не найдено. Попробуйте другой город.",false);
                     }
@@ -257,7 +257,7 @@ public class RailwayBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
-    private void sendStationOptions(Long chatId, String text,List<String>options,String callbackPrefix){
+    private void sendStationOptions(Long chatId, String text,List<ElementInfo>options,String callbackPrefix){
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
         message.setText(text);
@@ -265,10 +265,15 @@ public class RailwayBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>>rows = new ArrayList<>();
 
-        for(String option: options){
+        for(ElementInfo option: options){
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(option);
-            button.setCallbackData(callbackPrefix + option);
+            // Формируем текст кнопки
+            String buttonText = option.getMainText();
+            if(option.hasAdditionalText() && !option.getAdditionalText().isEmpty()){
+                buttonText += " ("+ option.getAdditionalText()+")";
+            }
+            button.setText(buttonText);
+            button.setCallbackData(callbackPrefix + option.getMainText());
 
             List<InlineKeyboardButton>row  = new ArrayList<>();
             row.add(button);
