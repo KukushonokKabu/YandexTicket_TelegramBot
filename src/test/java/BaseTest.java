@@ -13,6 +13,7 @@ import ru.mydomain.Xpath;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,26 +82,46 @@ public class BaseTest {
             }
         }
     }
-    @Attachment(value = "Screenshot {screenshotName}", type = "image/png")
-    protected byte [] takeScreenshot(String screenshotName){
-        try {
-            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
-        }
-        catch (Exception e){
-            System.err.println("Не удалось сделать скриншот: "+ e.getMessage());
-            return new byte[0];
-        }
-    }
+//    @Attachment(value = "Screenshot {screenshotName}", type = "image/png")
+//    protected byte [] takeScreenshot(String screenshotName){
+//        try {
+//            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+//        }
+//        catch (Exception e){
+//            System.err.println("Не удалось сделать скриншот: "+ e.getMessage());
+//            return new byte[0];
+//        }
+//    }
+//
+//    @Attachment(value = "Page source {sourceName}",type = "text/html")
+//    protected String savePageSource(String sourceName){
+//        try {
+//            return driver.getPageSource();
+//        }
+//        catch (Exception e){
+//            return "Не удалось получить исходный код страницы : "+ e.getMessage();
+//        }
+//    }
 
-    @Attachment(value = "Page source {sourceName}",type = "text/html")
-    protected String savePageSource(String sourceName){
+    @Step("Проверка появления подсказок")
+    protected void validateSuggestionsAppear(){
         try {
-            return driver.getPageSource();
+            boolean suggestionVisible = wait.until(driver -> {
+                List<WebElement>suggestions = driver.findElements(By.xpath("//div[@class='EhCXF _274Q5']//div[@class='GxV0a']"));
+                return suggestions.stream().anyMatch(WebElement::isDisplayed);
+            });
+
+            assertThat(suggestionVisible)
+                    .as("Подсказки должны появиться при вводе текста")
+                    .isTrue();
+            Allure.step("Подсказки успешно появились");
         }
         catch (Exception e){
-            return "Не удалось получить исходный код страницы : "+ e.getMessage();
+            Allure.step("Ошибка при проверке подсказок :"+  e.getMessage());
+            throw e;
         }
     }
+    @Step("Проверка кнопки очистки")
     protected void openTrainPage(){
         driver.get("https://travel.yandex.ru/trains/");
         waitForPageLoad();
