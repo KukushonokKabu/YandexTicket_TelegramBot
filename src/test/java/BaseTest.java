@@ -5,11 +5,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
+import org.testng.ITestContext;
+import org.testng.annotations.*;
 import ru.mydomain.Xpath;
+import utils.DetailedTelegramReporter;
+import utils.TelegramReporter;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -25,6 +25,24 @@ public class BaseTest {
     protected static WebDriver driver;
     protected Xpath xpath;
     protected static WebDriverWait wait;
+    private static long suiteStartTime;
+
+    @BeforeSuite
+    public void beforeSuite(ITestContext context){
+        suiteStartTime = System.currentTimeMillis();
+        TelegramReporter.sendSimpleMessage("\uD83D\uDE80 Запуск тестовой серии...");
+    }
+
+    @AfterSuite
+    public void afterSuite(ITestContext context){
+        long duration = System.currentTimeMillis() - suiteStartTime;
+
+
+        // Отправка отчета в Telegram
+        // TelegramReporter.sendTestReport(passed,failed,skipped,duration);
+        //TelegramReporter.sendDetailedReport(context, duration);
+        DetailedTelegramReporter.sendAllureDetailedReport(context, duration);
+    }
 
     @BeforeClass
     public static void setUpClass(){
@@ -57,6 +75,7 @@ public class BaseTest {
             Allure.label("browser","chrome");
             Allure.label("feature","Yandex Ticket");
 
+
             System.out.println("\uD83D\uDE80 Драйвер инициализирован для всех тестов");
 
         }
@@ -82,90 +101,144 @@ public class BaseTest {
             }
         }
     }
-//    @Attachment(value = "Screenshot {screenshotName}", type = "image/png")
-//    protected byte [] takeScreenshot(String screenshotName){
-//        try {
-//            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
-//        }
-//        catch (Exception e){
-//            System.err.println("Не удалось сделать скриншот: "+ e.getMessage());
-//            return new byte[0];
-//        }
-//    }
-//
-//    @Attachment(value = "Page source {sourceName}",type = "text/html")
-//    protected String savePageSource(String sourceName){
-//        try {
-//            return driver.getPageSource();
-//        }
-//        catch (Exception e){
-//            return "Не удалось получить исходный код страницы : "+ e.getMessage();
-//        }
-//    }
+
+    // Основные методы
 
     @Step("Проверка появления подсказок")
     protected void validateSuggestionsAppear(){
         try {
-            boolean suggestionVisible = wait.until(driver -> {
+            boolean suggestionVisible = wait.until(driver ->{
                 List<WebElement>suggestions = driver.findElements(By.xpath("//div[@class='EhCXF _274Q5']//div[@class='GxV0a']"));
                 return suggestions.stream().anyMatch(WebElement::isDisplayed);
             });
 
             assertThat(suggestionVisible)
-                    .as("Подсказки должны появиться при вводе текста")
+                    .as("✅ Подсказки должны появляться при вводе текста")
                     .isTrue();
-            Allure.step("Подсказки успешно появились");
+
+            Allure.step("Подсказки успешно появились ");
         }
         catch (Exception e){
-            Allure.step("Ошибка при проверке подсказок :"+  e.getMessage());
+            Allure.step("❌ Ошибка при проверке подсказок"+ e.getMessage());
+            throw e;
+        }
+
+    }
+    @Step("Проверка функциональности поля очистки")
+    protected void validateClearButtonFunctionality(){
+        try {
+            WebElement clearButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpath.getButtonClear())));
+
+            assertThat(clearButton.isDisplayed())
+                    .as("Кнопка очистки должна быть видимой")
+                    .isTrue();
+
+            assertThat(clearButton.isEnabled())
+                    .as("Кнопка очистки должна быть активноой")
+                    .isTrue();
+
+            Allure.step("✅ Кнопка очистки - OK (visible : true , enabled : true)");
+        }
+        catch (Exception e){
+            Allure.step("❌ Ошибка при проверке кнопки очистки: "+ e.getMessage());
             throw e;
         }
     }
-    @Step("Проверка кнопки очистки")
+    @Step("Проверка структуры подсказок")
+    protected void validateSuggestionStructure(){
+        try {
+            List<WebElement>suggestions = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//div[@class='EhCXF _274Q5']//div[@class='GxV0a']")));
+
+            assertThat(suggestions)
+                    .as("Должны появиться подсказки")
+                    .isNotEmpty();
+
+            // Проверяем первые три подсказки
+            suggestions.stream()
+                    .limit(3)
+                    .forEach(suggestion ->{
+                        String text = suggestion.getText();
+                        assertThat(text)
+                                .as("Текст подсказки не должен быть пустым")
+                                .isNotBlank();
+                        Allure.step("Подсказка :"+ text);
+                    });
+            Allure.step("✅ Структура подсказок корректна , найдено: "+ suggestions.size()+ " элементов");
+        }
+        catch (Exception e){
+            Allure.step("❌ Ошибка при получении структуры подсказок :"+  e.getMessage());
+            throw e;
+        }
+    }
+    //============== Вспомогательные методы ================
+
+    @Step("Клик по элементу : + {elementName}")
+    protected void clickElement(By locator, String elementName){
+        try {
+            WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
+            element.click();
+            Allure.step("✅ Успешно кликнули на : "+ elementName);
+        }
+        catch (Exception e){
+            Allure.step("❌ Ошибка клика на "+ elementName + ":"+ e.getMessage());
+            throw e;
+        }
+    }
+
+    @Step("Ввод текста '{text}'  в поле : {fieldName}")
+    protected void inputText(By locator, String text,String fieldName){
+        try {
+            WebElement field = wait.until(ExpectedConditions.elementToBeClickable(locator));
+            field.clear();
+            field.sendKeys(text);
+            Allure.step("✅ Успешно вввели '"+ text+ "' в поле: "+ fieldName);
+        }
+        catch (Exception e){
+            Allure.step("❌ Ошибка ввода текста в "+  fieldName+ ": "+ e.getMessage());
+            throw e;
+        }
+    }
     protected void openTrainPage(){
         driver.get("https://travel.yandex.ru/trains/");
         waitForPageLoad();
-        Allure.step("Открыта страница поиска билетов на поезда");
+        Allure.step("Открыта страница поиска билетов");
     }
 
-    @Step("Получение значения поля по xpath: {fieldXpath}")
+    @Step("Получение значения поля : {fieldXpath}")
     protected String getFieldValue(String fieldXpath){
         try {
             WebElement field = driver.findElement(By.xpath(fieldXpath));
             String value = field.getAttribute("value");
-            Allure.step("Значение поля: '"+ value+"'");
+            Allure.step("Значение поля :'"+ value+"'");
             return value;
         }
         catch (Exception e){
-            Allure.step("Ошибка получения значения поля: "+  e.getMessage());
+            Allure.step("Ошибка получения значения поля :"+ e.getMessage());
             return null;
         }
     }
 
-    @Step("Проверка текстового поля: {fieldName}")
-    protected void validateTextField(String fieldXpath,String fieldName){
+    @Step("Проверка текстового поля : {fieldName}")
+    protected void validateTextField(String fieldXpath, String fieldName){
         try {
             WebElement field = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(fieldXpath)));
             boolean isDisplayed = field.isDisplayed();
             boolean isEnabled = field.isEnabled();
             String currentValue = field.getAttribute("value");
 
-            // Assertions
             assertThat(isDisplayed)
-                    .as(fieldName + "должен быть видимым")
+                    .as(fieldName + " должен быть видимым")
                     .isTrue();
-
             assertThat(isEnabled)
-                    .as(fieldName+ "должен быть доступен для ввода")
+                    .as(fieldName+ " должен быть доступен для ввода ")
                     .isTrue();
 
-            // Детальное логирование для отладки
-            Allure.step(String.format("%s - visible: %s, enabled: %s, value: '%s'",
+            Allure.step(String.format("$s - visible: %s, enabled: %s, value: '%s'",
                     fieldName,isDisplayed,isEnabled,currentValue));
         }
         catch (Exception e){
-            Allure.step("Ошибка проверки поля "+  fieldName+ ": "+ e.getMessage());
-            throw e; // Перебрасываем исключение чтобы тест упал
+            Allure.step("Ошибка проверки поля :"+ fieldName+ ": "+ e.getMessage());
+            throw e;
         }
     }
     protected void waitForPageLoad(){
@@ -173,7 +246,7 @@ public class BaseTest {
             wait.until(ExpectedConditions.jsReturnsValue("return document.readyState === 'complete'"));
         }
         catch (Exception e){
-            System.out.println("⚠\uFE0F Страница загружена, но readyState не complete");
+            System.out.println("⚠\uFE0F  Страница загружен но readyState не complete");
         }
     }
 
@@ -181,14 +254,25 @@ public class BaseTest {
         try {
             WebElement field = driver.findElement(By.xpath(fieldXpath));
             field.clear();
-            // Дополнительная очистка через CTRL+A+Delete
-            field.sendKeys(Keys.CONTROL + "a");
+            field.sendKeys(Keys.CONTROL+ "a");
             field.sendKeys(Keys.DELETE);
+            Allure.step("Поле очищено");
         }
         catch (Exception e){
-            System.err.println("Ошибка очистки поля: "+ e.getMessage());
+            System.err.println("Ошибка очистки поля :"+ e.getMessage());
         }
     }
+    @Attachment(value = "Screenshot {screenshotName}", type = "image/png")
+    protected byte [] takeScreenshot(String screenshotName){
+        try {
+return ((TakesScreenshot)driver).getScreenshotAs(OutputType.BYTES);
+        }
+        catch (Exception e){
+            System.err.println("Не удалось делать скриншот: "+ e.getMessage());
+            return new byte[0];
+        }
+    }
+
 
 
 }

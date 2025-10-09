@@ -1,12 +1,9 @@
 import io.qameta.allure.*;
-import kotlin.jvm.Strictfp;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.Test;
 
-import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,7 +71,7 @@ public class LocatorValidationTest extends BaseTest{
         validateSuggestionsAppear();
 
         Allure.step("Проверка кнопки очистки");
-        validateClearButtonFiunctionality();
+        validateClearButtonFunctionality();
     }
     @Test(priority = 3)
     @Severity(SeverityLevel.CRITICAL)
@@ -89,7 +86,7 @@ public class LocatorValidationTest extends BaseTest{
         arrivalField.sendKeys("Санкт-Петербург");
 
         Allure.step("Проверка появления подсказок");
-        validateSuggestionAppear();
+        validateSuggestionsAppear();
     }
     @Test(priority = 4)
     @Severity(SeverityLevel.NORMAL)
