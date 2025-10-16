@@ -55,9 +55,9 @@ public class Xpath {
     }
 
     private String searchButton = "//button[@type='submit']";// Кнопка "Найти"
-    private String platz = "//div[@class='CYm20']//span[@class='cHsPh' and text()='плац']";// поезда у которых есть плацкарт
+    private String platz = "//span[@class='w49Yf' and text()='плац']";// поезда у которых есть плацкарт
     private String notPlaces = "//h2[@class='ReS7e XFySC b9-76']";// Надпись  "На заданном направлении (или поезде) мест нет"
-    private String textFieldOut = "//input[@role='combobox']";// Ввод города отправления
+    private String textFieldOut = "//input[@class='w_eHd']";// Ввод города отправления
     private String textFieldIn = "//input[@class='w_eHd input_center']";// Ввод города прибытия
     private String buttonClear = "//button[@aria-label='Очистить поле']";// Кнопка очисти города отправления
     private String calendar = "//div[@class='YC-8m vap86 UWwtJ']";// Тригер календаря
