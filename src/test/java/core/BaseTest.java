@@ -1,23 +1,33 @@
+package core;
+
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.qameta.allure.*;
+import io.restassured.response.Response;
+import net.lightbody.bmp.BrowserMobProxy;
+import net.lightbody.bmp.BrowserMobProxyServer;
+import net.lightbody.bmp.core.har.Har;
+import net.lightbody.bmp.core.har.HarEntry;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.ITestContext;
 import org.testng.annotations.*;
 import ru.mydomain.Xpath;
-import utils.DetailedTelegramReporter;
-import utils.TelegramReporter;
-import utils.TestDataGenerator;
+import utils.reporters.DetailedTelegramReporter;
+import utils.reporters.TelegramReporter;
+import utils.generators.TestDataGenerator;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners({io.qameta.allure.testng.AllureTestNg.class})
@@ -29,6 +39,7 @@ public class BaseTest {
     protected Xpath xpath;
     protected static WebDriverWait wait;
     private static long suiteStartTime;
+    protected static BrowserMobProxy proxy;
 
     @BeforeSuite
     public void beforeSuite(ITestContext context){
@@ -42,47 +53,47 @@ public class BaseTest {
 
 
         // Отправка отчета в Telegram
-        // TelegramReporter.sendTestReport(passed,failed,skipped,duration);
-        //TelegramReporter.sendDetailedReport(context, duration);
         DetailedTelegramReporter.sendAllureDetailedReport(context, duration);
     }
 
     @BeforeClass
     public static void setUpClass(){
-        if(driver ==null){
-            // Автоматическая настройка ChromeDriver  через WebDriverManager
+        if(driver == null){
+            // === ТОЛЬКО БАЗОВАЯ ИНИЦИАЛИЗАЦИЯ БЕЗ PROXY ===
             WebDriverManager.chromedriver().setup();
 
-            ChromeOptions options =  new ChromeOptions();
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--ignore-certificate-errors");
             options.addArguments("--disable-blink-features=AutomationControlled");
-            options.addArguments("--start-maximized");
-            options.addArguments("--disable-notifications");
             options.addArguments("--no-sandbox");
             options.addArguments("--disable-dev-shm-usage");
-
-            // Для отладки можно отключить headless-режим
-            boolean isHeadless = Boolean.parseBoolean(System.getProperty("headless","true"));
-            if(isHeadless){
-                options.addArguments("--headless=new");
-                options.addArguments("--window-size=1920,1080");
-            }
+            options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            options.setCapability(CapabilityType.ACCEPT_INSECURE_CERTS, true);
 
             driver = new ChromeDriver(options);
-            wait = new WebDriverWait(driver,Duration.ofSeconds(15));
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
-            driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+            wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
-            //Allure  метаданные
-            Allure.label("testType","locator-validation");
-            Allure.label("browser","chrome");
-            Allure.label("feature","Yandex Ticket");
-
-
-            System.out.println("\uD83D\uDE80 Драйвер инициализирован для всех тестов");
-
+            System.out.println("🚀 Драйвер инициализирован (Proxy будет запущен при необходимости)");
         }
     }
+
+    // === ОТДЕЛЬНЫЙ МЕТОД ДЛЯ ЗАПУСКА PROXY ===
+    @Step("Запуск BrowserMob Proxy для перехвата трафика")
+    protected void startProxyIfNeeded() {
+        if (proxy == null || !proxy.isStarted()) {
+            try {
+                proxy = new BrowserMobProxyServer();
+                proxy.setTrustAllServers(true); // ДО start()!
+                proxy.start(0);
+                proxy.newHar("yandex-train-har");
+                Allure.step("✅ BrowserMob Proxy запущен");
+            } catch (Exception e) {
+                Allure.step("⚠️ Не удалось запустить Proxy: " + e.getMessage());
+            }
+        }
+    }
+
+
 
     @BeforeMethod
     public void setUpMethod(Method method){
@@ -92,18 +103,60 @@ public class BaseTest {
 
     @AfterClass
     public static void tearDownClass(){
+        if(proxy != null){
+            proxy.stop();}
         if(driver != null){
             try {
                 driver.quit();
                 driver = null;
                 wait = null;
-                System.out.println("\uD83D\uDD1A Драйвер закрыт после всех тестов");
+                proxy = null;
+                System.out.println("\uD83D\uDD1A Драйвер и Proxy закрыты после всех тестов");
             }
             catch (Exception e){
                 System.err.println("Ошибка при закрытии драйвера: "+ e.getMessage());
             }
         }
     }
+
+    // Методы для гибридного тестирования
+
+    @Step("Перехват API  запросов для: {apiPattern}")
+    protected List<HarEntry> captureApiCalls(String apiPattern){
+        Har har = proxy.getHar();
+        List<HarEntry>apiCalls = new ArrayList<>();
+
+        for(HarEntry entry : har.getLog().getEntries()){
+            if(entry.getRequest().getUrl().contains(apiPattern)){
+                apiCalls.add(entry);
+                Allure.step("\uD83D\uDCE1 Перехвачен API вызов: "+ entry.getRequest().getMethod()+" "+ entry.getRequest().getUrl());
+            }
+        }
+        return apiCalls;
+    }
+
+    @Step("Выполнение API запроса: {url}")
+    protected Response executeApiRequest(String url,String method, String body){
+        return given()
+                .contentType("application/json")
+                .body(body)
+                .when()
+                .request(method,url);
+    }
+
+    @Step("Сравнение результатов API  и UI")
+    protected void compareUiAndApiResults(List<WebElement>uiElements, Response apiResponse){
+        try {
+            int uiCount = uiElements.size();
+            int apiCount = apiResponse.jsonPath().getList("").size();
+
+            Allure.step(String.format("UI  результатов: %d, API результатов: %d",uiCount,apiCount));
+        }
+        catch (Exception e){
+            Allure.step("⚠\uFE0F Сравнение не удалось: "+ e.getMessage());
+        }
+    }
+
 
     // Основные методы
 
@@ -127,9 +180,7 @@ public class BaseTest {
         }
 
     }
-//    @Step("Проверка кнопки поиска 2")
-//    protected void testingSearchButton(){
-//    }
+
     @Step("Проверка функциональности поля очистки")
     protected void validateClearButtonFunctionality(){
         try {
@@ -150,35 +201,10 @@ public class BaseTest {
             throw e;
         }
     }
-    @Step("Проверка структуры подсказок")
-    protected void validateSuggestionStructure(){
-        try {
-            List<WebElement>suggestions = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//div[@class='EhCXF _274Q5']//div[@class='GxV0a']")));
 
-            assertThat(suggestions)
-                    .as("Должны появиться подсказки")
-                    .isNotEmpty();
-
-            // Проверяем первые три подсказки
-            suggestions.stream()
-                    .limit(3)
-                    .forEach(suggestion ->{
-                        String text = suggestion.getText();
-                        assertThat(text)
-                                .as("Текст подсказки не должен быть пустым")
-                                .isNotBlank();
-                        Allure.step("Подсказка :"+ text);
-                    });
-            Allure.step("✅ Структура подсказок корректна , найдено: "+ suggestions.size()+ " элементов");
-        }
-        catch (Exception e){
-            Allure.step("❌ Ошибка при получении структуры подсказок :"+  e.getMessage());
-            throw e;
-        }
-    }
     //============== Вспомогательные методы ================
 
-    @Step("Клик по элементу : + {elementName}")
+    @Step("Клик по элементу : {elementName}")
     protected void clickElement(By locator, String elementName){
         try {
             WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
@@ -195,7 +221,7 @@ public class BaseTest {
     protected void inputText(By locator, String text,String fieldName){
         try {
             WebElement field = driver.findElement(locator);
-         //   field.clear();
+            field.clear();
             field.sendKeys(text);
             Allure.step("✅ Успешно ввели '"+ text+ "' в поле: "+ fieldName);
         }
@@ -223,10 +249,6 @@ public class BaseTest {
                 field.sendKeys(String.valueOf(c));
                 Thread.sleep(150 + ThreadLocalRandom.current().nextInt(100));
             }
-
-//            // Tab  для потери фокуса
-//            field.sendKeys(Keys.TAB);
-//            Thread.sleep(500);
 
             Allure.step("✅ Человеко-подобный ввод в :"+ fieldName);
         }
@@ -289,7 +311,7 @@ public class BaseTest {
     protected void clearField(String fieldXpath){
         try {
             WebElement field = driver.findElement(By.xpath(fieldXpath));
-           // field.clear();
+            field.clear();
             field.sendKeys(Keys.CONTROL+ "a");
             field.sendKeys(Keys.DELETE);
             Allure.step("Поле очищено");
@@ -305,7 +327,6 @@ public class BaseTest {
 
             // Генерируем тестовую дату и xpath
             Map<String,String> dateData = TestDataGenerator.getDateAndXpath();
-            String targetDate = dateData.get("date");
             String calendarXpath = dateData.get("xpath");
             String displayDate = dateData.get("displayDate");
 
@@ -353,7 +374,6 @@ public class BaseTest {
             for (int attempt = 1; attempt <= 3; attempt++) {
                 try {
                     Map<String, String> dateData = TestDataGenerator.getDateAndXpath();
-                    String targetDate = dateData.get("date");
                     String calendarXpath = dateData.get("xpath");
                     String displayDate = dateData.get("displayDate");
 
@@ -371,7 +391,6 @@ public class BaseTest {
                     List<WebElement> dateElements = driver.findElements(By.xpath(calendarXpath));
                     if (dateElements.isEmpty()) {
                         Allure.step("Дата " + displayDate + " не найдена, пробуем другую");
-                        //  closeCalendarIfOpen();
                         continue;
                     }
 
@@ -382,7 +401,6 @@ public class BaseTest {
                             dateElement.getAttribute("class").contains("disabled") ||
                             dateElement.getAttribute("aria-disabled") != null) {
                         Allure.step("Дата " + displayDate + " недоступна, пробуем другую");
-                    //    closeCalendarIfOpen();
                         continue;
                     }
 
@@ -391,7 +409,7 @@ public class BaseTest {
 
                     // Проверяем что календарь закрылся
                     wait.until(ExpectedConditions.invisibilityOfElementLocated(
-                            By.xpath("//div[contains(@class, 'calendar-container')]")
+                            By.xpath("//div[starts-with(@class,'TravelPopup')]")
                     ));
 
                     Allure.step("✅ Успешно выбрана дата: " + displayDate);
@@ -432,33 +450,6 @@ public class BaseTest {
         }
     }
 
-    /**
-     * Ожидает что URL содержит определенную строку
-     */
-    protected void waitForUrlContains(String expectedText) {
-        try {
-            Allure.step("Ожидание что URL содержит: " + expectedText);
-            wait.until(ExpectedConditions.urlContains(expectedText));
-            Allure.step("✅ URL содержит: " + expectedText);
-        } catch (Exception e) {
-            Allure.step("❌ URL не содержит '" + expectedText + "': " + e.getMessage());
-            throw e;
-        }
-    }
-
-    /**
-     * Ожидает что URL соответствует регулярному выражению
-     */
-    protected void waitForUrlMatches(String regex) {
-        try {
-            Allure.step("Ожидание что URL соответствует паттерну: " + regex);
-            wait.until(ExpectedConditions.urlMatches(regex));
-            Allure.step("✅ URL соответствует паттерну");
-        } catch (Exception e) {
-            Allure.step("❌ URL не соответствует паттерну: " + e.getMessage());
-            throw e;
-        }
-    }
 
     /**
      * Получает текущий URL и логирует в Allure
@@ -483,19 +474,6 @@ public class BaseTest {
         }
     }
 
-    /**
-     * Проверяет что текущий URL содержит определенные параметры
-     */
-    protected void assertUrlContainsParams(Map<String, String> expectedParams) {
-        String currentUrl = driver.getCurrentUrl();
-        Allure.step("Проверка параметров URL: " + currentUrl);
-
-        for (Map.Entry<String, String> entry : expectedParams.entrySet()) {
-            assertThat(currentUrl)
-                    .as("URL должен содержать параметр " + entry.getKey())
-                    .contains(entry.getKey() + "=" + entry.getValue());
-        }
-    }
     @Attachment(value = "Screenshot {screenshotName}", type = "image/png")
     protected byte [] takeScreenshot(String screenshotName){
         try {

@@ -1,4 +1,4 @@
-package utils;
+package utils.reporters;
 
 import org.testng.ITestContext;
 

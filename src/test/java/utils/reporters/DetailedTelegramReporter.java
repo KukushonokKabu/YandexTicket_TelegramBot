@@ -1,4 +1,4 @@
-package utils;
+package utils.reporters;
 
 import org.testng.ITestContext;
 import org.testng.ITestResult;
@@ -6,7 +6,6 @@ import io.qameta.allure.Description;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;

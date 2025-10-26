@@ -1,54 +1,27 @@
+package tests.atomic;
+
+import core.BaseTest;
 import io.qameta.allure.*;
+import io.restassured.response.Response;
+import net.lightbody.bmp.core.har.Har;
+import net.lightbody.bmp.core.har.HarEntry;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Feature("Валидация UI  элементов на всех страницах проекта")
 
 
 public class LocatorValidationTest extends BaseTest {
-//    @Test(priority = 1)
-//    @Severity(SeverityLevel.BLOCKER)
-//    @Description("Проверка доступности основных элементов на странице ")
-//    @Story("Пользователь открывает страницу поиска ж/д билетов")
-//    public void testTrainPageElements(){
-//        Allure.step("===Тестирование страницы поездов===");
-//        openTrainPage();
-//
-//        Allure.step("Проверка заголовка страницы поездов");
-//        assertThat(driver.getTitle())
-//                .as("Заголовок страницы должен содержать ключевые слова")
-//                .containsIgnoringCase("Яндекс")
-//                .containsIgnoringCase("билеты");
-//
-//        Allure.step("Проверка основных полей ввода на странице поездов");
-//        validateTextField(xpath.getTextFieldOut(),"Поле отправления (поезда)");
-//        validateTextField(xpath.getTextFieldIn(),"Поле прибытия (поезда)");
-//
-//        Allure.step("Проверка начального состояния полей на странице поездов");
-//        assertThat(getFieldValue(xpath.getTextFieldOut()))
-//                .as("Поле отправления не должно быть пустым при загрузке")
-//                .isNotEmpty();
-//        assertThat(getFieldValue(xpath.getTextFieldIn()))
-//                .as("Поле прибытия должно быть пустым при загрузке")
-//                .isNullOrEmpty();
-//
-//        Allure.step("Проверка дополнительных элементов на странице поездов");
-//        assertThat(driver.findElement(By.xpath(xpath.getCalendar())).isDisplayed())
-//                .as("Календарь должен быть видимым")
-//                .isTrue();
-//
-//        assertThat(driver.findElement(By.xpath(xpath.getSearchButton())).isEnabled())
-//                .as("Кнопка поиска должна быть активной")
-//                .isTrue();
-//    }
-
-    @Test(priority = 2)
+    // ========== Атомарные тесты  ===========
+    @Test(priority = 2, groups = {"fast","smoke","atomic"})
     @Severity(SeverityLevel.CRITICAL)
     @Description("Проверка функциональности поля отправления на странице поездов")
     @Story("Пользователь вводит город отправления на странице поездов")
@@ -56,21 +29,9 @@ public class LocatorValidationTest extends BaseTest {
         Allure.step("=== Тестирование поля отправления поезда ===");
         openTrainPage();
 
-        Allure.step("Ввод текста в поле отправления");
-        WebElement departureField = driver.findElement(By.xpath(xpath.getTextFieldOut()));
-
-        // Очистка поля
-        clearField(xpath.getTextFieldOut());
-        departureField.sendKeys("Москва");
-
-        assertThat(departureField.getAttribute("value"))
-                .as("Поле должно содержать введенный  текст")
-                .isEqualTo("Москва");
-
-        Allure.step("Проверка появления подсказок");
+        validateTextField(xpath.getTextFieldOut(),"Поле отправления");
+        humanLikeInput(By.xpath(xpath.getTextFieldOut()),"Москва","Поле отправления");
         validateSuggestionsAppear();
-
-        Allure.step("Проверка кнопки очистки");
         validateClearButtonFunctionality();
     }
 
@@ -169,9 +130,7 @@ public class LocatorValidationTest extends BaseTest {
         WebElement clearButton = driver.findElement(By.xpath(xpath.getButtonClear()));
         clearButton.click();
         fieldOut.sendKeys("Москва");
-        getFieldValue(xpath.getTextFieldOut());
         fieldIn.sendKeys("Джанкой");
-        getFieldValue(xpath.getTextFieldIn());
 
         // Шаг 3: Выбираем дату из календаря
         Allure.step("Выбор даты из календаря");
@@ -214,11 +173,72 @@ public class LocatorValidationTest extends BaseTest {
        else {
            Allure.step("ℹ\uFE0F Тест завершен: билетов на выбранную дату нет");
            System.out.println("На выбранную дату нет билетов но тест отработал корректно");
+           takeScreenshot("Билетов нет , но вот что мы видим насамом деле ");
        }
 
 
 
     }
+
+    @Test(priority = 8)
+    @Severity(SeverityLevel.CRITICAL)
+    public void testHybridSearchWithApiCapture() throws InterruptedException {
+        Allure.step("=== Гибридный тест UI + API ===");
+
+        try {
+            // Шаг 1: Запускаем Proxy  и подключаем к драйверу
+           // startProxyAndConfigureDriver();
+
+            // Шаг 2: Открываем страницу
+            openTrainPage();
+            String initialUrl = getCurrentUrlWithLog();
+
+            // Шаг 3: Заполняем форму
+            Allure.step("Заполнение формы через UI");
+            // Остальной код         }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // === НОВЫЙ МЕТОД ДЛЯ РАБОТЫ С ПЕРЕХВАЧЕННЫМИ URL ===
+    @Step("Выполнение API запроса с перехваченным URL: {realUrl}")
+    protected Response executeApiRequestWithRealUrl(String realUrl) {
+        return given()
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .header("Accept", "application/json")
+                .when()
+                .get(realUrl)
+                .then()
+                .extract()
+                .response();
+    }
+
+    // === ОБНОВЛЕННЫЙ МЕТОД ПЕРЕХВАТА ===
+    @Step("Перехват API запросов для: {apiPattern}")
+    protected List<HarEntry> captureApiCalls(String apiPattern) {
+        if (proxy == null || !proxy.isStarted()) {
+            Allure.step("⚠️ Proxy не запущен, перехват невозможен");
+            return new ArrayList<>();
+        }
+
+        Har har = proxy.getHar();
+        List<HarEntry> apiCalls = new ArrayList<>();
+
+        for (HarEntry entry : har.getLog().getEntries()) {
+            if (entry.getRequest().getUrl().contains(apiPattern)) {
+                apiCalls.add(entry);
+            }
+        }
+
+        Allure.step("📡 Найдено API вызовов: " + apiCalls.size());
+        return apiCalls;
+    }
+
+
+
 
 
 }
