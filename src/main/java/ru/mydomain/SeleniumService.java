@@ -321,7 +321,6 @@ catch (Exception e){
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
 
             // Очищаем поле "Откуда"
-            WebElement departureField = driver.findElement(By.xpath(xpath.getTextFieldOut()));
             WebElement clearDepartureButton = driver.findElement(By.xpath(xpath.getButtonClear()));
             clearDepartureButton.click();
 

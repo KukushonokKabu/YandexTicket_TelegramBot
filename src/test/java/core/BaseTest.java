@@ -366,69 +366,70 @@ public class BaseTest {
             throw e;
         }
     }
+
+    /*
+     * Метод для выбора даты в календаре
+     */
+
     protected void selectDateInCalendarWithValidation() {
         try {
-            Allure.step("=== ВЫБОР ДАТЫ С ПРОВЕРКОЙ ДОСТУПНОСТИ ===");
+            Allure.step("Выбор даты в календаре из доступных");
+            // Получаем текущее значение поля календаря отправки
+            String initialValue = getCalendarFieldValue();
 
-            // Пытаемся выбрать дату несколько раз если первая недоступна
-            for (int attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    Map<String, String> dateData = TestDataGenerator.getDateAndXpath();
-                    String calendarXpath = dateData.get("xpath");
-                    String displayDate = dateData.get("displayDate");
+            // Открываем календарь
+            clickElement(By.xpath(xpath.getCalendar()),"Поле календаря");
 
-                    Allure.step(String.format("Попытка %d: выбор даты %s", attempt, displayDate));
+            // Ждём появления календаря
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getPriceElements())));
 
-                    // Открываем календарь
-                    clickElement(By.xpath(xpath.getCalendar()), "Поле календаря");
-
-                    // Ждем появления элементов календаря
-                    wait.until(ExpectedConditions.visibilityOfElementLocated(
-                            By.xpath("//div[contains(@data-qa, 'calendar-day-')]")
-                    ));
-
-                    // Проверяем существует ли элемент даты
-                    List<WebElement> dateElements = driver.findElements(By.xpath(calendarXpath));
-                    if (dateElements.isEmpty()) {
-                        Allure.step("Дата " + displayDate + " не найдена, пробуем другую");
-                        continue;
-                    }
-
-                    WebElement dateElement = dateElements.get(0);
-
-                    // Проверяем что дата не заблокирована
-                    if (!dateElement.isEnabled() ||
-                            dateElement.getAttribute("class").contains("disabled") ||
-                            dateElement.getAttribute("aria-disabled") != null) {
-                        Allure.step("Дата " + displayDate + " недоступна, пробуем другую");
-                        continue;
-                    }
-
-                    // Кликаем по дате
-                    dateElement.click();
-
-                    // Проверяем что календарь закрылся
-                    wait.until(ExpectedConditions.invisibilityOfElementLocated(
-                            By.xpath("//div[starts-with(@class,'TravelPopup')]")
-                    ));
-
-                    Allure.step("✅ Успешно выбрана дата: " + displayDate);
-                    return;
-
-                } catch (Exception e) {
-                    Allure.step("❌ Попытка " + attempt + " не удалась: " + e.getMessage());
-                  //  closeCalendarIfOpen();
-                    if (attempt == 3) throw e;
-                }
+            // Ищем все доступные даты с ценами
+            List<WebElement> availableDates = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath(xpath.getPriceElements())));
+            if(availableDates.isEmpty()) {
+                throw new RuntimeException("Нет доступных дат для выбора");
             }
 
-            throw new RuntimeException("Не удалось выбрать доступную дату после 3 попыток");
+                Allure.step("Найдено доступных дат: "+ availableDates.size());
 
-        } catch (Exception e) {
-            Allure.step("❌ Критическая ошибка выбора даты: " + e.getMessage());
+                // Выбираем случайную доступную дату
+                int dateIndex = ThreadLocalRandom.current().nextInt(availableDates.size());
+                WebElement selectedDateCell = availableDates.get(dateIndex);
+                String selectedDate = driver.findElement(By.xpath(xpath.getCalendarDepartureValue())).getText();
+
+                Allure.step("Кликаем по дате :"+ selectedDate);
+                selectedDateCell.click();
+
+                // Ждём обновления значения в поле календаря
+                wait.until(driver ->{
+                    String newValue = getCalendarFieldValue();
+                    return newValue !=null && !newValue.equals(initialValue) && !newValue.isEmpty();
+                });
+
+                    // Получаем финальное значение для логирования
+                    String finalValue = getCalendarFieldValue();
+                    Allure.step("✅ Успешно выбрана дата: "+ finalValue);
+
+            }
+        catch (Exception e){
+            Allure.step("❌ Ошибка выбора даты: "+ e.getMessage());
             throw e;
         }
     }
+    /*
+     * Получение значения из поля календаря отправления
+     */
+    private String getCalendarFieldValue(){
+        try {
+            WebElement triggerValue = driver.findElement(By.xpath(xpath.getCalendarDepartureValue()));
+            return triggerValue.getText().trim();
+        }
+        catch (Exception e){
+            Allure.step("⚠\uFE0F Не удалось получить значение поля календаря: "+ e.getMessage());
+            return "";
+        }
+    }
+
+
     /**
      * Ожидает изменения URL от исходного
      */
@@ -473,6 +474,8 @@ public class BaseTest {
             throw e;
         }
     }
+
+
 
     @Attachment(value = "Screenshot {screenshotName}", type = "image/png")
     protected byte [] takeScreenshot(String screenshotName){

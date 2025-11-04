@@ -72,6 +72,17 @@ public class Xpath {
     private String arrivalDate ="//div[@class='M3inU GU5NH']//div[@class='kdDAS dNANh']";// Дата прибытия
     private String arrivalTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76'][2]";// Время прибытия
     private String suggestionStation = "//div[@class='GxV0a']";// Всплывающие подсказки с названия станций и городов
+    private String calendarDepartureValue = "//div[@data-qa='start-trigger-value']";// Значение поля даты отправления
+
+
+    public String getCalendarDepartureValue() {
+        return calendarDepartureValue;
+    }
+
+    public void setCalendarDepartureValue(String calendarDepartureValue) {
+        this.calendarDepartureValue = calendarDepartureValue;
+    }
+
 
 
     public String getSuggestionStation() {

@@ -137,12 +137,14 @@ public class LocatorValidationTest extends BaseTest {
         selectDateInCalendarWithValidation();
 
         // Шаг 4: Выполняем поиск
+        String url = getCurrentUrlWithLog(); // Получение текущего URL
         Allure.step("Запуск поиска");
         clickElement(By.xpath(xpath.getSearchButton()), "Кнопка поиска");
 
         // Шаг 5: Проверяем переход на страницу результатов
         Allure.step("Проверка перехода на страницу результатов");
         waitForUrlChange(initialUrl);
+
 
         // Проверяем наличие результатов
         Allure.step("Проверка наличия результатов поиска");
