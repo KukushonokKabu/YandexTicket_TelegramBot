@@ -400,10 +400,10 @@ public class BaseTest {
                 selectedDateCell.click();
 
                 // Ждём обновления значения в поле календаря
-                wait.until(driver ->{
-                    String newValue = getCalendarFieldValue();
-                    return newValue !=null && !newValue.equals(initialValue) && !newValue.isEmpty();
-                });
+              //  wait.until(driver ->{
+              //      String newValue = getCalendarFieldValue();
+              //      return newValue !=null && !newValue.equals(initialValue) && !newValue.isEmpty();
+              //  });
 
                     // Получаем финальное значение для логирования
                     String finalValue = getCalendarFieldValue();

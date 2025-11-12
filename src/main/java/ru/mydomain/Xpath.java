@@ -71,26 +71,49 @@ public class Xpath {
     }
 
     private String searchButton = "//button[@type='submit']";// Кнопка "Найти"
-    private String platz = "//span[@class='w49Yf' and text()='плац']";// поезда у которых есть плацкарт
-    private String notPlaces = "//h2[@class='ReS7e XFySC b9-76']";// Надпись  "На заданном направлении (или поезде) мест нет"
+    private String platz = "//span[@class='TM4TA' and text() ='плац']";// поезда у которых есть плацкарт
+    private String notPlaces = "//h2[@class='ReS7e XFySC b9-76']";// Надпись "На заданном направлении (или поезде) мест
+    // нет"
     private String textFieldOut = "//input[@class='w_eHd']";// Ввод города отправления
     private String textFieldIn = "//input[@class='w_eHd input_center']";// Ввод города прибытия
     private String buttonClear = "//button[@aria-label='Очистить поле']";// Кнопка очисти города отправления
     private String calendar = "//div[@class='YC-8m vap86 UWwtJ']";// Тригер календаря
-    private String priceElements = "//div[@data-qa='calendar']//span[@data-qa='price']";// Xpath  дней содержащих цены в календаре
+    private String priceElements = "//div[@data-qa='calendar']//span[@data-qa='price']";// Xpath дней содержащих цены в
+    // календаре
     private String ticketCards = "//*[contains(@class, 'Place_available')]";// Доступные для бронирования места в поезде
-    private String carriageNumber = "//div[@class='UOPED jneZF _4ZiVK']";// Номер вагона
-    private String price = "//div[@class='SJEAC']";//  Цена
-    private String departureDateDate = "//div[@class='Eqn7e b9-76']";//Дата отправления
-    private String departureDateTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76']";// Время отправления
+    private String carriageNumber = "//*[contains(@class, 'Place_available')]/ancestor::li[@class='_Kl6L YoiE6 NbmTc']//span[@class='HwAkJ'][contains(text(), 'вагон')]";// Номер вагона
+    private String price = "//span[@class='bQcBE total']";// Цена
+    private String departureDateDate = "//div[@class='M3inU']//div[@class='kdDAS dNANh']";// Дата отправления
+    private String departureDateTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76']";// Время
+    // отправления
     private String departureStation = "//div[@class='uAsFU']";// Вокзал отправления
     private String placeNumber = "//span[@class='lQbtv kdDAS b9-76']";// Номер места
-    private String arrivalDate = "//div[@class='M3inU GU5NH']//div[@class='kdDAS dNANh']";// Дата прибытия
+    private String arrivalDate = "//div[@class='HCQ9L']//div[@class='M3inU GU5NH']//div[@class='kdDAS dNANh']";// Дата прибытия
     private String arrivalTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76'][2]";// Время прибытия
     private String suggestionStation = "//div[@class='GxV0a']";// Всплывающие подсказки с названия станций и городов
-    private String calendarDepartureValue = "//div[@data-qa='start-trigger-value']";// Значение поля даты отправления
-    private String departureAndArrivalCity = "//div[@class=fr56h b9-76]"; //Город отправления - прибытия
-    private String travelTime = "//div[@class=l8KnO]//div"; // Время в пути
+    private String calendarDepartureValue = "//div[@data-qa='controlPlaceholder' and contains(text(),'Туда')]";// Значение
+    private String trainNumber = "//span[contains(., 'Поезд')]/text()[2]"; // Номер поезда
+    private String arrivalStation = "//div[@class='Eqn7e b9-76 XoAQK']";
+    private String departureAndArrivalCity = "//div[@class='fr56h b9-76']"; // Город отправления - прибытия
+    private String travelTime = "//div[@class='l8KnO']//div"; // Время в пути
+
+
+    public String getTrainNumber() {
+        return trainNumber;
+    }
+
+    public void setTrainNumber(String trainNumber) {
+        this.trainNumber = trainNumber;
+    }
+
+
+    public String getArrivalStation() {
+        return arrivalStation;
+    }
+
+    public void setArrivalStation(String arrivalStation) {
+        this.arrivalStation = arrivalStation;
+    }
 
 
     public String getTravelTime() {
@@ -101,8 +124,6 @@ public class Xpath {
         this.travelTime = travelTime;
     }
 
-
-
     public String getDepartureAndArrivalCity() {
         return departureAndArrivalCity;
     }
@@ -111,7 +132,6 @@ public class Xpath {
         this.departureAndArrivalCity = departureAndArrivalCity;
     }
 
-
     public String getCalendarDepartureValue() {
         return calendarDepartureValue;
     }
@@ -119,7 +139,6 @@ public class Xpath {
     public void setCalendarDepartureValue(String calendarDepartureValue) {
         this.calendarDepartureValue = calendarDepartureValue;
     }
-
 
     public String getSuggestionStation() {
         return suggestionStation;

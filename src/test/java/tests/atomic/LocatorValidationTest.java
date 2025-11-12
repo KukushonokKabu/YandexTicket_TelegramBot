@@ -6,12 +6,17 @@ import io.restassured.response.Response;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.testng.annotations.Test;
+import pages.ResultsPage;
+import pages.models.TrainInfo;
+import ru.mydomain.Xpath;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -120,10 +125,7 @@ public class LocatorValidationTest extends BaseTest {
         String initialUrl = getCurrentUrlWithLog();
 
         // Шаг 2: Заполняем города
-//        Allure.step("Заполнение городов отправления и назначения");
-//        clearField(xpath.getTextFieldOut());
-//        humanLikeInput(By.xpath(xpath.getTextFieldOut()), "Москва", "Поле отправления");
-//        inputText(By.xpath(xpath.getTextFieldIn()), "Санкт-Петербург", "Поле назначения");
+
         Allure.step("Заполнение городов отправления и назначения");
         WebElement fieldOut = driver.findElement(By.xpath(xpath.getTextFieldOut()));
         WebElement fieldIn = driver.findElement(By.xpath(xpath.getTextFieldIn()));
@@ -151,32 +153,94 @@ public class LocatorValidationTest extends BaseTest {
 
         boolean hasResults;
         String resultMessage;
-       try {
-           hasResults = wait.until(driver ->
-                   driver.findElements(By.xpath(xpath.getPlatz())).size() > 0
-           );
-           resultMessage = "✅ Успешный поиск с выбором даты из календаря";
-       }
+        WebElement selectedElement = null;
 
-       catch (Exception e){
-           Allure.step("На выбранную дату нет свободных билетов");
-           hasResults = false;
-           resultMessage = "ℹ\uFE0F На выбранную дату нет свободных билетов";
-       }
-       // Логируем результат
+        try {
+            // Ждем появления хотя бы одного видимого элемента
+            WebElement firstResult = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getPlatz()))
+            );
+            hasResults = true;
+            resultMessage = "✅ Успешный поиск с выбором даты из календаря";
+
+        } catch (TimeoutException e) {
+            // Если элементы не появились за время ожидания
+            hasResults = false;
+            resultMessage = "ℹ️ На выбранную дату нет свободных билетов";
+            Allure.step("Элементы не найдены в течение времени ожидания");
+
+        } catch (Exception e) {
+            // Другие возможные ошибки
+            hasResults = false;
+            resultMessage = "❌ Ошибка при проверке результатов поиска: " + e.getMessage();
+            Allure.step("Ошибка при проверке результатов: " + e.getMessage());
+        }
+
+// Логируем результат
         Allure.step(resultMessage);
 
-       if(hasResults){
-           Allure.step("✅ Успешный поиск с выбором даты из календаря");
-           assertThat(hasResults)
-                   .as("Должны отображаться результаты поиска")
-                   .isTrue();
-       }
-       else {
-           Allure.step("ℹ\uFE0F Тест завершен: билетов на выбранную дату нет");
-           System.out.println("На выбранную дату нет билетов но тест отработал корректно");
-           takeScreenshot("Билетов нет , но вот что мы видим насамом деле ");
-       }
+        if (hasResults) {
+            // Дополнительная проверка, что элемент действительно доступен
+            try {
+                WebElement visibleElement = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpath.getPlatz())));
+                assertThat(visibleElement)
+                        .as("Должен отображаться доступный результат поиска")
+                        .isNotNull();
+
+                Allure.step("✅ Найден доступный для взаимодействия элемент");
+
+                // Получаем все элементы и выбираем случайный
+                List<WebElement> allResults = driver.findElements(By.xpath(xpath.getPlatz()));
+                System.out.println("Найдено поездов : "+ allResults.size());
+
+                if (!allResults.isEmpty()) {
+                    // Выбираем случайный индекс
+                    Random random = new Random();
+                    int randomIndex = random.nextInt(allResults.size());
+                    selectedElement = allResults.get(randomIndex);
+
+                    selectedElement.click();
+
+                    // Ожидание загрузки элементов
+                    try {
+                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getTicketCards())));
+                    }
+                    catch (Exception e){
+                        System.out.println("Не получилось дождаться появления свободных мест в поезде : "+ e.getMessage());
+                    }
+
+
+                    List<WebElement>places = driver.findElements(By.xpath(xpath.getTicketCards()));
+                    Random random1 = new Random();
+                    int randomPlace = random1.nextInt(places.size());
+                    WebElement place = places.get(randomPlace);
+                    place.click();
+
+
+                    Allure.step(String.format("✅ Выбран случайный элемент %d из %d найденных результатов",
+                            randomIndex + 1, allResults.size()));
+                    ResultsPage res = new ResultsPage(driver,wait);
+                    TrainInfo info = res.getTrainInfoByIndex(randomIndex);
+                    System.out.println("Вот что нам удалось собрать: "+ info.toString());
+
+                    // Теперь можно работать с selectedElement
+                    // Например: selectedElement.click(), selectedElement.getText(), и т.д.
+
+                } else {
+                    Allure.step("❌ Не удалось найти элементы для выбора");
+                    takeScreenshot("Элементы_не_найдены_для_выбора");
+                }
+
+            } catch (Exception e) {
+                Allure.step("❌ Элемент найден, но недоступен для взаимодействия: " + e.getMessage());
+                takeScreenshot("Элемент_недоступен_для_взаимодействия");
+                throw e;
+            }
+        } else {
+            Allure.step("ℹ️ Тест завершен: билетов на выбранную дату нет");
+            System.out.println("На выбранную дату нет билетов, но тест отработал корректно");
+            takeScreenshot("Билетов_нет_результат_поиска");
+        }
 
 
 

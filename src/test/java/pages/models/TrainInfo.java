@@ -4,15 +4,30 @@ package pages.models;
  * Модель данных для хранения информации о поезде
  */
 public class TrainInfo {
+    public String getTrainNumber() {
+        return trainNumber;
+    }
+
+    public void setTrainNumber(String trainNumber) {
+        this.trainNumber = trainNumber;
+    }
+
+    private String trainNumber;
     private String carriageNumber;// Номер вагона
     private String dateDeparture; // Дата отправления
     private String dateArrival; // Дата прибытия
     private String departureTime; // Время отправления
     private String arrivalTime; // Время прибытия
+    private String arrivalStation; // Станция прибытия
+    private String travelTime; // Время в пути
+    private String price; // Цена
+    private String place; // Номер места
+
 
     @Override
     public String toString() {
         return "TrainInfo{" +
+                "Номер поезда: '"+ trainNumber + '\''+
                 "Номер вагона: '" + carriageNumber + '\'' +
                 ", Дата отправления: '" + dateDeparture + '\'' +
                 ", Дата прибытия: '" + dateArrival + '\'' +
@@ -26,9 +41,7 @@ public class TrainInfo {
                 '}';
     }
 
-    private String travelTime; // Время в пути
-    private String price; // Цена
-    private String place; // Номер места
+
 
     public String getCarriageNumber() {
         return carriageNumber;
@@ -111,20 +124,20 @@ public class TrainInfo {
     }
 
     private String departureStation; // Станция/город отправления
-    private String arrivalStation; // Станция/город прибытия
 
 
-    public TrainInfo(String carriageNumber, String dateDeparture, String dateArrival, String departureTime, String arrivalTime, String travelTime, String price, String place, String departureStation, String arrivalStation) {
-        this.carriageNumber = carriageNumber;
-        this.dateDeparture = dateDeparture;
-        this.dateArrival = dateArrival;
-        this.departureTime = departureTime;
-        this.arrivalTime = arrivalTime;
-        this.travelTime = travelTime;
-        this.price = price;
-        this.place = place;
-        this.departureStation = departureStation;
-        this.arrivalStation = arrivalStation;
+    public TrainInfo(String trainNumber ,String carriageNumber, String dateDeparture, String dateArrival, String departureTime, String arrivalTime, String travelTime, String price, String place, String departureStation, String arrivalStation) {
+        this.carriageNumber = carriageNumber; // Номер вагона
+        this.dateDeparture = dateDeparture; // Дата отправления
+        this.dateArrival = dateArrival; // Дата прибытия
+        this.departureTime = departureTime; // Время отправления
+        this.arrivalTime = arrivalTime; // Время прибытия
+        this.travelTime = travelTime; // Время в пути
+        this.price = price; // Цена
+        this.place = place; // Место
+        this.departureStation = departureStation; // Станция отправления
+        this.arrivalStation = arrivalStation; // Станция прибытия
+        this.trainNumber = trainNumber; // Номер поезда
     }
     public TrainInfo(){}
 
