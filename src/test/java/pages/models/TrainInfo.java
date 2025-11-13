@@ -26,19 +26,42 @@ public class TrainInfo {
 
     @Override
     public String toString() {
-        return "TrainInfo{" +
-                "Номер поезда: '"+ trainNumber + '\''+
-                "Номер вагона: '" + carriageNumber + '\'' +
-                ", Дата отправления: '" + dateDeparture + '\'' +
-                ", Дата прибытия: '" + dateArrival + '\'' +
-                ", Время отправления: '" + departureTime + '\'' +
-                ", Время прибытия: '" + arrivalTime + '\'' +
-                ", Время в пути: '" + travelTime + '\'' +
-                ", Цена: '" + price + '\'' +
-                ", Место: '" + place + '\'' +
-                ", Станция отправления: '" + departureStation + '\'' +
-                ", Станция прибытия: '" + arrivalStation + '\'' +
+        return "TrainInfo{" +"\n"+
+                "* Номер поезда: "+ trainNumber + "\n"+
+                "* Номер вагона: " + carriageNumber + "\n" +
+                "* Дата отправления: " + dateDeparture + "\n" +
+                "* Время отправления: " + departureTime + "\n" +
+                "* Дата прибытия: " + dateArrival + "\n" +
+                "* Время прибытия: " + arrivalTime + "\n" +
+                "* Время в пути: " + travelTime + "\n" +
+                "* Цена: " + price + "\n" +
+                "* Место: " + place + "\n" +
+                "* Станция отправления: " + departureStation + "\n" +
+                "* Станция прибытия: " + arrivalStation + "\n" +
                 '}';
+    }
+    public String toTelegramFormat() {
+        return String.format(
+                "🚂 <b>Информация о поезде:</b>\n\n" +
+                        "📍 <b>Маршрут:</b> %s → %s\n" +
+                        "📅 <b>Отправление:</b> %s %s\n" +
+                        "🏁 <b>Прибытие:</b> %s %s\n" +
+                        "⏱️ <b>В пути:</b> %s\n" +
+                        "🚇 <b>Вагон/Место:</b> %s / %s\n" +
+                        "💰 <b>Цена:</b> %s\n" +
+                        "🔢 <b>Номер поезда:</b> %s",
+                departureStation != null ? departureStation : "N/A",
+                arrivalStation != null ? arrivalStation : "N/A",
+                dateDeparture != null ? dateDeparture : "N/A",
+                departureTime != null ? departureTime : "N/A",
+                dateArrival != null ? dateArrival : "N/A",
+                arrivalTime != null ? arrivalTime : "N/A",
+                travelTime != null ? travelTime : "N/A",
+                carriageNumber != null ? carriageNumber : "N/A",
+                place != null ? place : "N/A",
+                price != null ? price : "N/A",
+                trainNumber != null ? trainNumber : "N/A"
+        );
     }
 
 

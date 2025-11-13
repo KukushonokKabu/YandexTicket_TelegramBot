@@ -12,7 +12,6 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.testng.annotations.Test;
 import pages.ResultsPage;
 import pages.models.TrainInfo;
-import ru.mydomain.Xpath;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class LocatorValidationTest extends BaseTest {
     // ========== Атомарные тесты  ===========
-    @Test(priority = 2, groups = {"fast","smoke","atomic"})
+    @Test(priority = 2, groups = {"fast", "smoke", "atomic"})
     @Severity(SeverityLevel.CRITICAL)
     @Description("Проверка функциональности поля отправления на странице поездов")
     @Story("Пользователь вводит город отправления на странице поездов")
@@ -34,8 +33,8 @@ public class LocatorValidationTest extends BaseTest {
         Allure.step("=== Тестирование поля отправления поезда ===");
         openTrainPage();
 
-        validateTextField(xpath.getTextFieldOut(),"Поле отправления");
-        humanLikeInput(By.xpath(xpath.getTextFieldOut()),"Москва","Поле отправления");
+        validateTextField(xpath.getTextFieldOut(), "Поле отправления");
+        humanLikeInput(By.xpath(xpath.getTextFieldOut()), "Москва", "Поле отправления");
         validateSuggestionsAppear();
         validateClearButtonFunctionality();
     }
@@ -139,7 +138,6 @@ public class LocatorValidationTest extends BaseTest {
         selectDateInCalendarWithValidation();
 
         // Шаг 4: Выполняем поиск
-        String url = getCurrentUrlWithLog(); // Получение текущего URL
         Allure.step("Запуск поиска");
         clickElement(By.xpath(xpath.getSearchButton()), "Кнопка поиска");
 
@@ -157,7 +155,7 @@ public class LocatorValidationTest extends BaseTest {
 
         try {
             // Ждем появления хотя бы одного видимого элемента
-            WebElement firstResult = wait.until(
+            wait.until(
                     ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getPlatz()))
             );
             hasResults = true;
@@ -191,7 +189,7 @@ public class LocatorValidationTest extends BaseTest {
 
                 // Получаем все элементы и выбираем случайный
                 List<WebElement> allResults = driver.findElements(By.xpath(xpath.getPlatz()));
-                System.out.println("Найдено поездов : "+ allResults.size());
+                System.out.println("Найдено поездов : " + allResults.size());
 
                 if (!allResults.isEmpty()) {
                     // Выбираем случайный индекс
@@ -204,24 +202,45 @@ public class LocatorValidationTest extends BaseTest {
                     // Ожидание загрузки элементов
                     try {
                         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getTicketCards())));
-                    }
-                    catch (Exception e){
-                        System.out.println("Не получилось дождаться появления свободных мест в поезде : "+ e.getMessage());
+                    } catch (Exception e) {
+                        System.out.println("Не получилось дождаться появления свободных мест в поезде : " + e.getMessage());
                     }
 
 
-                    List<WebElement>places = driver.findElements(By.xpath(xpath.getTicketCards()));
+                    List<WebElement> places = driver.findElements(By.xpath(xpath.getTicketCards()));
                     Random random1 = new Random();
                     int randomPlace = random1.nextInt(places.size());
                     WebElement place = places.get(randomPlace);
+
                     place.click();
+                    takeScreenshot("Выбранное место в вагоне");
 
 
                     Allure.step(String.format("✅ Выбран случайный элемент %d из %d найденных результатов",
                             randomIndex + 1, allResults.size()));
-                    ResultsPage res = new ResultsPage(driver,wait);
+                    ResultsPage res = new ResultsPage(driver, wait);
                     TrainInfo info = res.getTrainInfoByIndex(randomIndex);
-                    System.out.println("Вот что нам удалось собрать: "+ info.toString());
+                    setLastCollectedTrainInfo(info);
+                    System.out.println("Вот что нам удалось собрать: " + info.toString());
+
+                    setLastCollectedTrainInfo(info);
+                    setTestSpecificData(info.toTelegramFormat());
+
+                    String testData = String.format(
+                            "🚂 Найден поезд: %s\n📍 Вагон: %s, Место: %s\n💰 Цена: %s\n📅 Дата: %s %s",
+                            info.getTrainNumber() != null ? info.getTrainNumber() : "N/A",
+                            info.getDepartureStation(),
+                            info.getArrivalStation(),
+                            info.getCarriageNumber(),
+                            info.getDateDeparture(),
+                            info.getDepartureTime(),
+                            info.getDateArrival(),
+                            info.getArrivalTime(),
+                            info.getTravelTime(),
+                            info.getPrice(),
+                            info.getPlace()
+                    );
+                    setTestSpecificData(testData);
 
                     // Теперь можно работать с selectedElement
                     // Например: selectedElement.click(), selectedElement.getText(), и т.д.
@@ -243,25 +262,23 @@ public class LocatorValidationTest extends BaseTest {
         }
 
 
-
     }
 
     @Test(priority = 8)
     @Severity(SeverityLevel.CRITICAL)
-    public void testHybridSearchWithApiCapture() throws InterruptedException {
+    public void testHybridSearchWithApiCapture() {
         Allure.step("=== Гибридный тест UI + API ===");
 
         try {
             // Шаг 1: Запускаем Proxy  и подключаем к драйверу
-           // startProxyAndConfigureDriver();
+            // startProxyAndConfigureDriver();
 
             // Шаг 2: Открываем страницу
             openTrainPage();
-            String initialUrl = getCurrentUrlWithLog();
 
             // Шаг 3: Заполняем форму
             Allure.step("Заполнение формы через UI");
-            // Остальной код         }
+            // Этот метод еще в разработке
 
 
         } catch (Exception e) {
@@ -302,9 +319,6 @@ public class LocatorValidationTest extends BaseTest {
         Allure.step("📡 Найдено API вызовов: " + apiCalls.size());
         return apiCalls;
     }
-
-
-
 
 
 }

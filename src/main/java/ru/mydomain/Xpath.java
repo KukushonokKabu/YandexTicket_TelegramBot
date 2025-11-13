@@ -91,7 +91,7 @@ public class Xpath {
     private String arrivalDate = "//div[@class='HCQ9L']//div[@class='M3inU GU5NH']//div[@class='kdDAS dNANh']";// Дата прибытия
     private String arrivalTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76'][2]";// Время прибытия
     private String suggestionStation = "//div[@class='GxV0a']";// Всплывающие подсказки с названия станций и городов
-    private String calendarDepartureValue = "//div[@data-qa='controlPlaceholder' and contains(text(),'Туда')]";// Значение
+    private String calendarDepartureValue = "//div[@data-qa='start-trigger-value' or @data-qa='end-trigger-value']";// Значение
     private String trainNumber = "//span[contains(., 'Поезд')]/text()[2]"; // Номер поезда
     private String arrivalStation = "//div[@class='Eqn7e b9-76 XoAQK']";
     private String departureAndArrivalCity = "//div[@class='fr56h b9-76']"; // Город отправления - прибытия

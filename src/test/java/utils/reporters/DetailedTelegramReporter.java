@@ -1,8 +1,10 @@
 package utils.reporters;
 
+import core.BaseTest;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
 import io.qameta.allure.Description;
+import pages.models.TrainInfo;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,6 +14,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import static utils.reporters.TelegramReporter.sendScreenshot;
 
 public class DetailedTelegramReporter {
 
@@ -139,6 +143,9 @@ public class DetailedTelegramReporter {
      * Добавляет специфичные детали для каждого типа теста
      */
     private static void addTestSpecificDetails(StringBuilder report, String testName, ITestResult result) {
+        // Получаем сохраненные данные теста
+        TrainInfo trainInfo = BaseTest.getLastCollectedTrainInfo();
+        String testData = BaseTest.getTestSpecificData();
         switch (testName) {
             case "testInitialPageElements":
             case "testTrainPageElements":
@@ -189,7 +196,23 @@ public class DetailedTelegramReporter {
             case "testSearchWithDateSelection":
                 report.append("   🔍 <b>Проверка:</b> Полный сценарий поиска с выбором даты из календаря\n");
                 report.append("   ✅ <b>Результат:</b> Пользовательский сценарий выполнен успешно\n");
-                report.append("   🎯 <b>Действия:</b> Заполнениие города отправления и назначения , генерация и ввод даты отправления , нажатие кнопки поиска и успешный переход на страницу результатов\n");
+                report.append("   🎯 <b>Действия:</b> Заполнение города отправления и назначения , генерация и ввод даты отправления , нажатие кнопки поиска и успешный переход на страницу результатов\n");
+
+                if (trainInfo != null) {
+                    report.append("\n");
+                    report.append("   🎫 <b>Собранные данные:</b>\n");
+                    report.append("   🚂 <b>Поезд:</b> ").append(trainInfo.getTrainNumber() != null ? trainInfo.getTrainNumber() : "N/A").append("\n");
+                    report.append("   📍 <b>Вагон:</b> ").append(trainInfo.getCarriageNumber()).append("\n");
+                    report.append("   🪑 <b>Место:</b> ").append(trainInfo.getPlace()).append("\n");
+                    report.append("   💰 <b>Цена:</b> ").append(trainInfo.getPrice()).append("\n");
+                    report.append("   📅 <b>Отправление:</b> ").append(trainInfo.getDateDeparture()).append(" ").append(trainInfo.getDepartureTime()).append("\n");
+                    report.append("   🏁 <b>Прибытие:</b> ").append(trainInfo.getDateArrival()).append(" ").append(trainInfo.getArrivalTime()).append("\n");
+                    report.append("   ⏱️ <b>В пути:</b> ").append(trainInfo.getTravelTime()).append("\n");
+                } else if (testData != null) {
+                    report.append("\n");
+                    report.append("   📋 <b>Данные теста:</b>\n");
+                    report.append("   ").append(testData.replace("\n", "\n   ")).append("\n");
+                }
                 break;
 
             default:
@@ -261,6 +284,77 @@ public class DetailedTelegramReporter {
 
         } catch (Exception e) {
             System.err.println("❌ Ошибка отправки: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Детальный отчет с шагами тестирования и скриншотом
+     */
+    public static void sendAllureDetailedReportWithScreenshot(ITestContext context, long durationMs, byte[] screenshot) {
+        try {
+            // Сначала отправляем текстовый отчет
+            sendAllureDetailedReport(context, durationMs);
+
+            // Затем отправляем скриншот с данными
+            if (screenshot != null && screenshot.length > 0) {
+                // Получаем данные о поезде для подписи
+                TrainInfo trainInfo = BaseTest.getLastCollectedTrainInfo();
+                String caption = buildScreenshotCaption(trainInfo, context, durationMs);
+
+                // Отправляем скриншот
+                sendScreenshot(screenshot, caption);
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Ошибка отправки отчета со скриншотом: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Создает подпись для скриншота
+     */
+    private static String buildScreenshotCaption(TrainInfo trainInfo, ITestContext context, long durationMs) {
+        StringBuilder caption = new StringBuilder();
+
+        caption.append("📸 Скриншот выбранного места\n\n");
+
+        caption.append("🚨 === ВАЖНАЯ ИНФОРМАЦИЯ ===\n");
+        caption.append("💵 Цена на скриншоте без постельного белья\n");
+        caption.append("💳 Полная цена в отчете выше\n");
+
+        if (trainInfo != null) {
+            caption.append("Для деталей бронирования смотри текстовый отчет выше 👆\n\n");
+        }
+
+        // Статистика тестов
+        int passed = context.getPassedTests().size();
+        int failed = context.getFailedTests().size();
+        int skipped = context.getSkippedTests().size();
+        int total = passed + failed + skipped;
+
+        caption.append("📅 Дата: ").append(new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date()));
+
+        return caption.toString();
+    }
+    /**
+     * Отправляет полный отчет: сначала текст, потом скриншот (если есть)
+     */
+    public static void sendCompleteReport(ITestContext context, long durationMs, byte[] screenshot) {
+        try {
+            // Всегда отправляем текстовый отчет первым
+            sendAllureDetailedReport(context, durationMs);
+
+            // Если есть скриншот - отправляем его вторым сообщением с минимальной информацией
+            if (screenshot != null && screenshot.length > 0) {
+                // Ждем немного между сообщениями
+                Thread.sleep(1000);
+
+                String caption = buildScreenshotCaption(BaseTest.getLastCollectedTrainInfo(), context, durationMs);
+                sendScreenshot(screenshot, caption);
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Ошибка отправки полного отчета: " + e.getMessage());
         }
     }
 }
