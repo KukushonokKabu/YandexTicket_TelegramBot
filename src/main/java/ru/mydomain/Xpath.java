@@ -71,81 +71,83 @@ public class Xpath {
     }
 
     private String searchButton = "//button[@type='submit']";// Кнопка "Найти"
-    private String platz = "//span[@class='TM4TA' and text() ='плац']";// поезда у которых есть плацкарт
+    private String platz = "//a[contains(@href, 'coachType=platzkarte')]";// поезда у которых есть плацкарт
     private String notPlaces = "//h2[@class='ReS7e XFySC b9-76']";// Надпись "На заданном направлении (или поезде) мест
     // нет"
-    private String textFieldOut = "//input[@class='w_eHd']";// Ввод города отправления
-    private String textFieldIn = "//input[@class='w_eHd input_center']";// Ввод города прибытия
+    private String textFieldOut = "//input[@class='urSya']";// Ввод города отправления
+    private String textFieldIn = "//input[@class='urSya input_center']";// Ввод города прибытия
     private String buttonClear = "//button[@aria-label='Очистить поле']";// Кнопка очисти города отправления
-    private String calendar = "//div[@class='YC-8m vap86 UWwtJ']";// Тригер календаря
+    private String calendar = "//div[@class='YC-8m vap86 UWwtJ'][contains(text(),'Туда')]";// Тригер календаря
     private String priceElements = "//div[@data-qa='calendar']//span[@data-qa='price']";// Xpath дней содержащих цены в
     // календаре
     private String ticketCards = "//*[contains(@class, 'Place_available')]";// Доступные для бронирования места в поезде
-    private String carriageNumber = "//*[contains(@class, 'Place_available')]/ancestor::li[@class='_Kl6L YoiE6 NbmTc']//span[@class='HwAkJ'][contains(text(), 'вагон')]";// Номер вагона
-    private String price = "//span[@class='bQcBE total']";// Цена
-    private String departureDateDate = "//div[@class='M3inU']//div[@class='kdDAS dNANh']";// Дата отправления
-    private String departureDateTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76']";// Время
+    private String carriageNumber = "//span[contains(text(),' вагон')]";// Номер вагона
+    private String price = "//span[@data-qa='price' and contains(@class, 'total')]";// Цена
+    private String departureDateDate = "//time[@datetime]";// Дата отправления
+    private String departureDateTime = "//div[contains(@class, 'b9-76') and contains(text(), ':')][1]";// Время
     // отправления
-    private String departureStation = "//div[@class='uAsFU']";// Вокзал отправления
-    private String placeNumber = "//span[@class='lQbtv kdDAS b9-76']";// Номер места
-    private String arrivalDate = "//div[@class='HCQ9L']//div[@class='M3inU GU5NH']//div[@class='kdDAS dNANh']";// Дата прибытия
-    private String arrivalTime = "//div[@class='EhCXF EnnSI _274Q5']//div[@class='fr56h b9-76'][2]";// Время прибытия
-    private String suggestionStation = "//div[@class='GxV0a']";// Всплывающие подсказки с названия станций и городов
+    private String departureStation = "//form[@name='TRAIN_BOOK']//div[contains(@class, 'KWm7w')]/div[1]";// Вокзал отправления
+    private String placeNumber = "//span[contains(text(), 'место')]";// Номер места
+    private String arrivalDate = "//div[@class='XHFnM A21d5']//div[1]";// Дата прибытия
+    private String arrivalTime = "//div[contains(@class, 'b9-76') and contains(text(), ':')][2]";// Время прибытия
+    private String suggestionStation = "//div[contains(@id, 'suggest-')]";// Всплывающие подсказки с названия станций и городов
     private String calendarDepartureValue = "//div[@data-qa='start-trigger-value' or @data-qa='end-trigger-value']";// Значение
-    private String trainNumber = "//span[contains(., 'Поезд')]/text()[2]"; // Номер поезда
-    private String arrivalStation = "//div[@class='Eqn7e b9-76 XoAQK']";
+    private String trainNumber = "//span[text()='Поезд']/following-sibling::text()[1]"; // Номер поезда
+    private String arrivalStation = "//div[@class='Eqn7e b9-76 XoAQK']"; // Станция прибытия
     private String departureAndArrivalCity = "//div[@class='fr56h b9-76']"; // Город отправления - прибытия
-    private String travelTime = "//div[@class='l8KnO']//div"; // Время в пути
+    private String travelTime = "//div[@class='hAMfi']//div[1]"; // Время в пути
+    private String carriageContainer = "//ul[@role='tablist']/li"; // Котнейнер вагона
 
 
     public String getTrainNumber() {
         return trainNumber;
     }
-
-    public void setTrainNumber(String trainNumber) {
-        this.trainNumber = trainNumber;
+    public String getCarriageContainer() {
+        return carriageContainer;
     }
+    // Номер вагона с индексом
+    public String getCarriageNumberWithIndex(int index) {
+        return String.format("//ul[@role='tablist']/li[%d]//span[contains(text(),' вагон')]", index);
+    }
+
+    // Номер места с индексом
+    public String getPlaceNumberWithIndex(int index) {
+        return String.format("//ul[@role='tablist']/li[%d]//span[contains(text(),'место')]/following-sibling::span[1]", index);
+    }
+
 
 
     public String getArrivalStation() {
         return arrivalStation;
     }
 
-    public void setArrivalStation(String arrivalStation) {
-        this.arrivalStation = arrivalStation;
-    }
 
 
     public String getTravelTime() {
         return travelTime;
     }
 
-    public void setTravelTime(String travelTime) {
-        this.travelTime = travelTime;
-    }
 
     public String getDepartureAndArrivalCity() {
         return departureAndArrivalCity;
     }
 
-    public void setDepartureAndArrivalCity(String departureAndArrivalCity) {
-        this.departureAndArrivalCity = departureAndArrivalCity;
-    }
+
 
     public String getCalendarDepartureValue() {
         return calendarDepartureValue;
     }
 
-    public void setCalendarDepartureValue(String calendarDepartureValue) {
-        this.calendarDepartureValue = calendarDepartureValue;
-    }
+
 
     public String getSuggestionStation() {
         return suggestionStation;
     }
 
-    public void setSuggestionStation(String suggestionStation) {
-        this.suggestionStation = suggestionStation;
+    // Доступные места в конкретном контейнере
+    public String getAvailablePlacesWithIndex(int index) {
+        return String.format("//ul[@role='tablist']/li[%d]//*[contains(@class, 'Place_available')]", index);
     }
+
 
 }

@@ -208,6 +208,8 @@ public class DetailedTelegramReporter {
                     report.append("   📅 <b>Отправление:</b> ").append(trainInfo.getDateDeparture()).append(" ").append(trainInfo.getDepartureTime()).append("\n");
                     report.append("   🏁 <b>Прибытие:</b> ").append(trainInfo.getDateArrival()).append(" ").append(trainInfo.getArrivalTime()).append("\n");
                     report.append("   ⏱️ <b>В пути:</b> ").append(trainInfo.getTravelTime()).append("\n");
+                    report.append("   ⏱️ <b>Станция отправления:</b> ").append(trainInfo.getDepartureStation()).append("\n");
+                    report.append("   ⏱️ <b>Станция прибытия:</b> ").append(trainInfo.getArrivalStation()).append("\n");
                 } else if (testData != null) {
                     report.append("\n");
                     report.append("   📋 <b>Данные теста:</b>\n");

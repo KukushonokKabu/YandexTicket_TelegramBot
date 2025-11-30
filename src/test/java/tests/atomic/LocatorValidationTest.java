@@ -6,6 +6,7 @@ import io.restassured.response.Response;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -199,27 +200,27 @@ public class LocatorValidationTest extends BaseTest {
 
                     selectedElement.click();
 
-                    // Ожидание загрузки элементов
+                    // Ожидание загрузки контейнеров-вагонов
                     try {
-                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getTicketCards())));
+                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getCarriageContainer())));
                     } catch (Exception e) {
-                        System.out.println("Не получилось дождаться появления свободных мест в поезде : " + e.getMessage());
+                        System.out.println("Не получилось дождаться появления контейнеров : " + e.getMessage());
                     }
 
 
-                    List<WebElement> places = driver.findElements(By.xpath(xpath.getTicketCards()));
-                    Random random1 = new Random();
-                    int randomPlace = random1.nextInt(places.size());
-                    WebElement place = places.get(randomPlace);
-
-                    place.click();
-                    takeScreenshot("Выбранное место в вагоне");
-
-
-                    Allure.step(String.format("✅ Выбран случайный элемент %d из %d найденных результатов",
-                            randomIndex + 1, allResults.size()));
+//                    List<WebElement> places = driver.findElements(By.xpath(xpath.getTicketCards()));
+//                    Random random1 = new Random();
+//                    int randomPlace = random1.nextInt(places.size());
+//                    WebElement place = places.get(randomPlace);
+//
+//                    place.click();
+//                    takeScreenshot("Выбранное место в вагоне");
+//
+//
+//                    Allure.step(String.format("✅ Выбран случайный элемент %d из %d найденных результатов",
+//                            randomIndex + 1, allResults.size()));
                     ResultsPage res = new ResultsPage(driver, wait);
-                    TrainInfo info = res.getTrainInfoByIndex(randomIndex);
+                    TrainInfo info = res.getTrainInfoByIndex();
                     setLastCollectedTrainInfo(info);
                     System.out.println("Вот что нам удалось собрать: " + info.toString());
 
@@ -242,8 +243,10 @@ public class LocatorValidationTest extends BaseTest {
                     );
                     setTestSpecificData(testData);
 
-                    // Теперь можно работать с selectedElement
-                    // Например: selectedElement.click(), selectedElement.getText(), и т.д.
+
+//              ********************************************************************************************************
+
+
 
                 } else {
                     Allure.step("❌ Не удалось найти элементы для выбора");
