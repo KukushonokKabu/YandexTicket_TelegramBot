@@ -201,15 +201,16 @@ public class DetailedTelegramReporter {
                 if (trainInfo != null) {
                     report.append("\n");
                     report.append("   🎫 <b>Собранные данные:</b>\n");
-                    report.append("   🚂 <b>Поезд:</b> ").append(trainInfo.getTrainNumber() != null ? trainInfo.getTrainNumber() : "N/A").append("\n");
+                    report.append("   🚂 <b>Поезд:</b> ").append(trainInfo.getTrainNumber()).append("\n");
                     report.append("   📍 <b>Вагон:</b> ").append(trainInfo.getCarriageNumber()).append("\n");
                     report.append("   🪑 <b>Место:</b> ").append(trainInfo.getPlace()).append("\n");
                     report.append("   💰 <b>Цена:</b> ").append(trainInfo.getPrice()).append("\n");
                     report.append("   📅 <b>Отправление:</b> ").append(trainInfo.getDateDeparture()).append(" ").append(trainInfo.getDepartureTime()).append("\n");
                     report.append("   🏁 <b>Прибытие:</b> ").append(trainInfo.getDateArrival()).append(" ").append(trainInfo.getArrivalTime()).append("\n");
-                    report.append("   ⏱️ <b>В пути:</b> ").append(trainInfo.getTravelTime()).append("\n");
-                    report.append("   ⏱️ <b>Станция отправления:</b> ").append(trainInfo.getDepartureStation()).append("\n");
-                    report.append("   ⏱️ <b>Станция прибытия:</b> ").append(trainInfo.getArrivalStation()).append("\n");
+                    report.append("   ⏳ <b>В пути:</b> ").append(trainInfo.getTravelTime()).append("\n");
+                    report.append("   \uD83D\uDE86 <b>Рейс:</b> ").append(trainInfo.getDepartureAndArrivalCity()).append("\n");
+                    report.append("   \uD83C\uDFC1 <b>Станция отправления:</b> ").append(trainInfo.getDepartureStation()).append("\n");
+                    report.append("   ✅ <b>Станция прибытия:</b> ").append(trainInfo.getArrivalStation()).append("\n");
                 } else if (testData != null) {
                     report.append("\n");
                     report.append("   📋 <b>Данные теста:</b>\n");

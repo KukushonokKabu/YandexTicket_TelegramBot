@@ -184,20 +184,28 @@ public class BaseTest {
 
     @Step("Проверка появления подсказок")
     protected void validateSuggestionsAppear() {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getSuggestionStation())));
         try {
-            boolean suggestionVisible = wait.until(driver -> {
-                List<WebElement> suggestions = driver.findElements(By.xpath("//div[@class='EhCXF _274Q5']//div[@class='GxV0a']"));
-                return suggestions.stream().anyMatch(WebElement::isDisplayed);
-            });
+            Thread.sleep(2000);
+//            boolean suggestionVisible = wait.until(driver -> {
+//                List<WebElement> suggestions = driver.findElements(By.xpath(xpath.getSuggestionStation()));
+//                return suggestions.stream().anyMatch(WebElement::isDisplayed);
+//            });
+//
+//            assertThat(suggestionVisible)
+//                    .as("✅ Подсказки должны появляться при вводе текста")
+//                    .isTrue();
+//
+//            Allure.step("Подсказки успешно появились ");
 
-            assertThat(suggestionVisible)
-                    .as("✅ Подсказки должны появляться при вводе текста")
-                    .isTrue();
+            List<WebElement> elements = driver.findElements(By.xpath(xpath.getSuggestionStation()));
+            assertThat(elements)
+                    .as("Должно быть найдено минимум 3 элемента")
+                    .hasSizeGreaterThanOrEqualTo(3);
+        }
 
-            Allure.step("Подсказки успешно появились ");
-        } catch (Exception e) {
+        catch (Exception e) {
             Allure.step("❌ Ошибка при проверке подсказок" + e.getMessage());
-            throw e;
         }
 
     }

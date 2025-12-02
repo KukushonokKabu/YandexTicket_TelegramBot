@@ -92,7 +92,7 @@ public class Xpath {
     private String arrivalTime = "//div[contains(@class, 'b9-76') and contains(text(), ':')][2]";// Время прибытия
     private String suggestionStation = "//div[contains(@id, 'suggest-')]";// Всплывающие подсказки с названия станций и городов
     private String calendarDepartureValue = "//div[@data-qa='start-trigger-value' or @data-qa='end-trigger-value']";// Значение
-    private String trainNumber = "//span[text()='Поезд']/following-sibling::text()[1]"; // Номер поезда
+    private String trainNumber = "//*[contains(text(),'Поезд')]"; // Номер поезда
     private String arrivalStation = "//div[@class='Eqn7e b9-76 XoAQK']"; // Станция прибытия
     private String departureAndArrivalCity = "//div[@class='fr56h b9-76']"; // Город отправления - прибытия
     private String travelTime = "//div[@class='hAMfi']//div[1]"; // Время в пути

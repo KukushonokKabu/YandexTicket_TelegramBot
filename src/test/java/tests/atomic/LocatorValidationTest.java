@@ -6,7 +6,6 @@ import io.restassured.response.Response;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -35,7 +34,11 @@ public class LocatorValidationTest extends BaseTest {
         openTrainPage();
 
         validateTextField(xpath.getTextFieldOut(), "Поле отправления");
-        humanLikeInput(By.xpath(xpath.getTextFieldOut()), "Москва", "Поле отправления");
+     //   humanLikeInput(By.xpath(xpath.getTextFieldOut()), "Москва", "Поле отправления");
+        WebElement textFieldOut = driver.findElement(By.xpath(xpath.getTextFieldOut()));
+        WebElement clearButton = driver.findElement(By.xpath(xpath.getButtonClear()));
+        clearButton.click();
+        textFieldOut.sendKeys("Москва");
         validateSuggestionsAppear();
         validateClearButtonFunctionality();
     }
@@ -70,7 +73,7 @@ public class LocatorValidationTest extends BaseTest {
         departureField.sendKeys("Москва");
 
         Allure.step("Ожидание и проверка подсказок");
-        List<WebElement> suggestions = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//div[@class='EhCXF _274Q5']//div[@class='GxV0a']")));
+        List<WebElement> suggestions = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath(xpath.getSuggestionStation())));
 
         assertThat(suggestions)
                 .as("Должны появиться подсказки")
@@ -208,19 +211,8 @@ public class LocatorValidationTest extends BaseTest {
                     }
 
 
-//                    List<WebElement> places = driver.findElements(By.xpath(xpath.getTicketCards()));
-//                    Random random1 = new Random();
-//                    int randomPlace = random1.nextInt(places.size());
-//                    WebElement place = places.get(randomPlace);
-//
-//                    place.click();
-//                    takeScreenshot("Выбранное место в вагоне");
-//
-//
-//                    Allure.step(String.format("✅ Выбран случайный элемент %d из %d найденных результатов",
-//                            randomIndex + 1, allResults.size()));
                     ResultsPage res = new ResultsPage(driver, wait);
-                    TrainInfo info = res.getTrainInfoByIndex();
+                    TrainInfo info = res.collectTrainAndSeatInfo();
                     setLastCollectedTrainInfo(info);
                     System.out.println("Вот что нам удалось собрать: " + info.toString());
 
@@ -229,7 +221,7 @@ public class LocatorValidationTest extends BaseTest {
 
                     String testData = String.format(
                             "🚂 Найден поезд: %s\n📍 Вагон: %s, Место: %s\n💰 Цена: %s\n📅 Дата: %s %s",
-                            info.getTrainNumber() != null ? info.getTrainNumber() : "N/A",
+                            info.getTrainNumber(),
                             info.getDepartureStation(),
                             info.getArrivalStation(),
                             info.getCarriageNumber(),
@@ -287,6 +279,13 @@ public class LocatorValidationTest extends BaseTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    @Test()
+    public void findTrainNumber(){
+        driver.get("https://travel.yandex.ru/trains/order/?adults=1&bedding=1&coachNumber=11&coachType=platzkarte&expandedServiceClassKey=3%D0%91_withSchema_withRequirements_%D0%93%D0%A0%D0%90%D0%9D%D0%94%D0%A2&forward=P1_077%D0%90_2000001_9616963_2026-01-30T10%3A21&fromId=c213&fromName=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0&number=077%D0%90&petsAllowed=true&provider=P1&time=10.21&toId=c23023&toName=%D0%94%D0%B6%D0%B0%D0%BD%D0%BA%D0%BE%D0%B9&when=2026-01-30");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getCarriageContainer())));
+        WebElement numberTrainElement = driver.findElement(By.xpath("//*[contains(text(),'Поезд')]"));
+        System.out.println("Вот что мы добыли по этому xpath: "+ numberTrainElement.getText());
     }
 
     // === НОВЫЙ МЕТОД ДЛЯ РАБОТЫ С ПЕРЕХВАЧЕННЫМИ URL ===

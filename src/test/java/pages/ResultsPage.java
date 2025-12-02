@@ -48,8 +48,8 @@ public class ResultsPage extends BaseTest {
 
     // Собираем информацию о случайном поезде по индексу
 
-    @Step("Получение информации о поезде по индексу :{index}")
-    public TrainInfo getTrainInfoByIndex() {
+    @Step("Получение информации о поезде и месте")
+    public TrainInfo collectTrainAndSeatInfo() {
         TrainInfo info = new TrainInfo();
 
         // Ожидание загрузки контейнеров вагонов
@@ -131,12 +131,20 @@ public class ResultsPage extends BaseTest {
                 info.setDepartureStation(driver.findElement(By.xpath(xpath.getDepartureStation())).getText());
             } catch (Exception e) {
                 System.out.println("Ошибка получения станции отправления: " + e.getMessage());
+            }try {
+                info.setTrainNumber(driver.findElement(By.xpath(xpath.getTrainNumber())).getText());
+            } catch (Exception e) {
+                System.out.println("Ошибка получения номера поезда: " + e.getMessage());
             }
 
             try {
                 info.setDepartureTime(driver.findElement(By.xpath(xpath.getDepartureDateTime())).getText());
             } catch (Exception e) {
                 System.out.println("Ошибка получения времени отправления: " + e.getMessage());
+            }try {
+                info.setDepartureAndArrivalCity(driver.findElement(By.xpath(xpath.getDepartureAndArrivalCity())).getText());
+            } catch (Exception e) {
+                System.out.println("Ошибка получения рейса: " + e.getMessage());
             }
 
             try {

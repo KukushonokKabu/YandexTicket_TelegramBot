@@ -12,7 +12,7 @@ public class TrainInfo {
         this.trainNumber = trainNumber;
     }
 
-    private String trainNumber;
+    private String trainNumber;// Номер поезда
     private String carriageNumber;// Номер вагона
     private String dateDeparture; // Дата отправления
     private String dateArrival; // Дата прибытия
@@ -22,6 +22,16 @@ public class TrainInfo {
     private String travelTime; // Время в пути
     private String price; // Цена
     private String place; // Номер места
+
+    public String getDepartureAndArrivalCity() {
+        return departureAndArrivalCity;
+    }
+
+    public void setDepartureAndArrivalCity(String departureAndArrivalCity) {
+        this.departureAndArrivalCity = departureAndArrivalCity;
+    }
+
+    private String departureAndArrivalCity;
 
 
     @Override
@@ -36,6 +46,7 @@ public class TrainInfo {
                 "* Время в пути: " + travelTime + "\n" +
                 "* Цена: " + price + "\n" +
                 "* Место: " + place + "\n" +
+                "* Рейс: " + departureAndArrivalCity + "\n" +
                 "* Станция отправления: " + departureStation + "\n" +
                 "* Станция прибытия: " + arrivalStation + "\n" +
                 '}';
@@ -52,6 +63,7 @@ public class TrainInfo {
                         "🔢 <b>Номер поезда:</b> %s",
                 departureStation != null ? departureStation : "N/A",
                 arrivalStation != null ? arrivalStation : "N/A",
+                departureAndArrivalCity!=null ? departureAndArrivalCity : "N/A",
                 dateDeparture != null ? dateDeparture : "N/A",
                 departureTime != null ? departureTime : "N/A",
                 dateArrival != null ? dateArrival : "N/A",
@@ -149,7 +161,7 @@ public class TrainInfo {
     private String departureStation; // Станция/город отправления
 
 
-    public TrainInfo(String trainNumber ,String carriageNumber, String dateDeparture, String dateArrival, String departureTime, String arrivalTime, String travelTime, String price, String place, String departureStation, String arrivalStation) {
+    public TrainInfo(String trainNumber ,String carriageNumber, String dateDeparture, String dateArrival, String departureTime, String arrivalTime, String travelTime, String price, String place,String departureAndArrivalCity, String departureStation, String arrivalStation) {
         this.carriageNumber = carriageNumber; // Номер вагона
         this.dateDeparture = dateDeparture; // Дата отправления
         this.dateArrival = dateArrival; // Дата прибытия
@@ -158,6 +170,7 @@ public class TrainInfo {
         this.travelTime = travelTime; // Время в пути
         this.price = price; // Цена
         this.place = place; // Место
+        this.departureAndArrivalCity = departureAndArrivalCity;//Рейс
         this.departureStation = departureStation; // Станция отправления
         this.arrivalStation = arrivalStation; // Станция прибытия
         this.trainNumber = trainNumber; // Номер поезда
