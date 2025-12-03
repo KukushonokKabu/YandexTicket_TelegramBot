@@ -34,7 +34,7 @@ public class LocatorValidationTest extends BaseTest {
         openTrainPage();
 
         validateTextField(xpath.getTextFieldOut(), "Поле отправления");
-     //   humanLikeInput(By.xpath(xpath.getTextFieldOut()), "Москва", "Поле отправления");
+        //   humanLikeInput(By.xpath(xpath.getTextFieldOut()), "Москва", "Поле отправления");
         WebElement textFieldOut = driver.findElement(By.xpath(xpath.getTextFieldOut()));
         WebElement clearButton = driver.findElement(By.xpath(xpath.getButtonClear()));
         clearButton.click();
@@ -236,10 +236,6 @@ public class LocatorValidationTest extends BaseTest {
                     setTestSpecificData(testData);
 
 
-//              ********************************************************************************************************
-
-
-
                 } else {
                     Allure.step("❌ Не удалось найти элементы для выбора");
                     takeScreenshot("Элементы_не_найдены_для_выбора");
@@ -279,13 +275,6 @@ public class LocatorValidationTest extends BaseTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    @Test()
-    public void findTrainNumber(){
-        driver.get("https://travel.yandex.ru/trains/order/?adults=1&bedding=1&coachNumber=11&coachType=platzkarte&expandedServiceClassKey=3%D0%91_withSchema_withRequirements_%D0%93%D0%A0%D0%90%D0%9D%D0%94%D0%A2&forward=P1_077%D0%90_2000001_9616963_2026-01-30T10%3A21&fromId=c213&fromName=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0&number=077%D0%90&petsAllowed=true&provider=P1&time=10.21&toId=c23023&toName=%D0%94%D0%B6%D0%B0%D0%BD%D0%BA%D0%BE%D0%B9&when=2026-01-30");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getCarriageContainer())));
-        WebElement numberTrainElement = driver.findElement(By.xpath("//*[contains(text(),'Поезд')]"));
-        System.out.println("Вот что мы добыли по этому xpath: "+ numberTrainElement.getText());
     }
 
     // === НОВЫЙ МЕТОД ДЛЯ РАБОТЫ С ПЕРЕХВАЧЕННЫМИ URL ===

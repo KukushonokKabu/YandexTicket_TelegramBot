@@ -19,8 +19,8 @@ import static utils.reporters.TelegramReporter.sendScreenshot;
 
 public class DetailedTelegramReporter {
 
-    private static final String BOT_TOKEN = "8392190074:AAEePUpivRQU67JRvEdEFWzeFq7n9Jym788";
-    private static final String CHAT_ID = "1848447175"; // Замените на ваш Chat ID
+    private static final String BOT_TOKEN = TestTelegramConfig.getBotToken();
+    private static final String CHAT_ID = TestTelegramConfig.getChatId();
 
     /**
      * Детальный отчет с шагами тестирования
@@ -196,7 +196,7 @@ public class DetailedTelegramReporter {
             case "testSearchWithDateSelection":
                 report.append("   🔍 <b>Проверка:</b> Полный сценарий поиска с выбором даты из календаря\n");
                 report.append("   ✅ <b>Результат:</b> Пользовательский сценарий выполнен успешно\n");
-                report.append("   🎯 <b>Действия:</b> Заполнение города отправления и назначения , генерация и ввод даты отправления , нажатие кнопки поиска и успешный переход на страницу результатов\n");
+                report.append("   🎯 <b>Действия:</b> Заполнение города отправления и назначения , выбор даты отправления , нажатие кнопки поиска, переход на страницу результатов,сбор результатов\n");
 
                 if (trainInfo != null) {
                     report.append("\n");

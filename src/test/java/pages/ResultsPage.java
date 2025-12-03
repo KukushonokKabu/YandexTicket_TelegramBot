@@ -99,8 +99,6 @@ public class ResultsPage extends BaseTest {
 
             System.out.println("Выбрано место с индексом: " + randomPlaceIndex + " из " + availablePlaces.size());
 
-            // Прокрутка к месту
-            //  js.executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});", selectedPlace);
 
             // Делаем скриншот ДО клика
             takeScreenshot("Скриншот до выбора места в вагоне " + carriageNumber);

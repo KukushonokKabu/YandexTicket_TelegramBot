@@ -8,14 +8,14 @@ import java.nio.charset.StandardCharsets;
 
 public class TelegramReporter {
 
-    private static final String BOT_TOKEN = "8392190074:AAEePUpivRQU67JRvEdEFWzeFq7n9Jym788";
-    private static final String CHAT_ID = "1848447175"; // ваш chat_id
+    private static final String BOT_TOKEN = TestTelegramConfig.getBotToken();
+    private static final String CHAT_ID = TestTelegramConfig.getChatId();
 
 
     /**
      * Отправляет сообщение в Telegram через HTTP API
      */
-    private static void sendTelegramMessage(String message) {
+    public static void sendTelegramMessage(String message) {
         try {
             String urlString = "https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage";
 
