@@ -144,8 +144,8 @@ public class DetailedTelegramReporter {
      */
     private static void addTestSpecificDetails(StringBuilder report, String testName, ITestResult result) {
         // Получаем сохраненные данные теста
-        TrainInfo trainInfo = BaseTest.getLastCollectedTrainInfo();
-        String testData = BaseTest.getTestSpecificData();
+        TrainInfo trainInfo = core.TestContext.getTrainInfo();
+        String testData = core.TestContext.getData();
         switch (testName) {
             case "testInitialPageElements":
             case "testTrainPageElements":
@@ -301,7 +301,7 @@ public class DetailedTelegramReporter {
             // Затем отправляем скриншот с данными
             if (screenshot != null && screenshot.length > 0) {
                 // Получаем данные о поезде для подписи
-                TrainInfo trainInfo = BaseTest.getLastCollectedTrainInfo();
+                TrainInfo trainInfo =core.TestContext.getTrainInfo();
                 String caption = buildScreenshotCaption(trainInfo, context, durationMs);
 
                 // Отправляем скриншот
@@ -352,7 +352,7 @@ public class DetailedTelegramReporter {
                 // Ждем немного между сообщениями
                 Thread.sleep(1000);
 
-                String caption = buildScreenshotCaption(BaseTest.getLastCollectedTrainInfo(), context, durationMs);
+                String caption = buildScreenshotCaption(core.TestContext.getTrainInfo(), context, durationMs);
                 sendScreenshot(screenshot, caption);
             }
 

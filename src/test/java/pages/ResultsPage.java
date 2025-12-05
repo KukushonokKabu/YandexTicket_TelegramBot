@@ -22,11 +22,13 @@ public class ResultsPage extends BaseTest {
     private WebDriver driver;
     private WebDriverWait wait;
     private Xpath xpath;
+    private utils.helpers.BaseTestHelper helper;
 
     public ResultsPage(WebDriver driver, WebDriverWait wait) {
         this.driver = driver;
         this.wait = wait;
         this.xpath = new Xpath();
+        this.helper = new utils.helpers.BaseTestHelper(driver, wait);
     }
 
     // Ожидание загрузки страницы результатов
@@ -191,6 +193,11 @@ public class ResultsPage extends BaseTest {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         WebElement shadowRoot = (WebElement) js.executeScript("return arguments[0].shadowRoot", element);
         return shadowRoot != null;
+    }
+
+    @Step("Сделать скриншот: {screenshotName}")
+    public byte[] takeScreenshot(String screenshotName) {
+        return helper.takeScreenshot(screenshotName);
     }
 
 

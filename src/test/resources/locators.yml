@@ -1,0 +1,55 @@
+# ========== ЛОКАТОРЫ ДЛЯ ТЕСТОВ YANDEX TRAVEL ==========
+
+search:
+  button: "//button[@type='submit']"
+  fields:
+    departure: "//input[@class='urSya']"
+    arrival: "//input[@class='urSya input_center']"
+  clear: "//button[@aria-label='Очистить поле']"
+  suggestions: "//div[contains(@id, 'suggest-')]"
+
+calendar:
+  trigger: "//div[@class='YC-8m vap86 UWwtJ'][contains(text(),'Туда')]"
+  price_elements: "//div[@data-qa='calendar']//span[@data-qa='price']"
+  departure_value: "//div[@data-qa='start-trigger-value' or @data-qa='end-trigger-value']"
+
+results:
+  trains_with_platz: "//a[contains(@href, 'coachType=platzkarte')]"
+  no_places_message: "//h2[@class='ReS7e XFySC b9-76']"
+  carriage_container: "//ul[@role='tablist']/li"
+
+  # Динамические шаблоны
+  templates:
+    carriage_with_index: "//ul[@role='tablist']/li[%d]//span[contains(text(),' вагон')]"
+    place_with_index: "//ul[@role='tablist']/li[%d]//span[contains(text(),'место')]/following-sibling::span[1]"
+    available_places_with_index: "//ul[@role='tablist']/li[%d]//*[contains(@class, 'Place_available')]"
+
+train_info:
+  # Основная информация
+  number: "//*[contains(text(),'Поезд')]"
+  route_cities: "//div[@class='fr56h b9-76']"
+  travel_time: "//div[@class='hAMfi']//div[1]"
+
+  # Отправление
+  departure:
+    date: "//time[@datetime]"
+    time: "//div[contains(@class, 'b9-76') and contains(text(), ':')][1]"
+    station: "//form[@name='TRAIN_BOOK']//div[contains(@class, 'KWm7w')]/div[1]"
+
+  # Прибытие
+  arrival:
+    date: "//div[@class='XHFnM A21d5']//div[1]"
+    time: "//div[contains(@class, 'b9-76') and contains(text(), ':')][2]"
+    station: "//div[@class='Eqn7e b9-76 XoAQK']"
+
+  # Бронь
+  booking:
+    carriage_number: "//span[contains(text(),' вагон')]"
+    place_number: "//span[contains(text(), 'место')]"
+    price: "//span[@data-qa='price' and contains(@class, 'total')]"
+    available_places: "//*[contains(@class, 'Place_available')]"
+
+# Альтернативные локаторы (fallback)
+fallbacks:
+  calendar_alternative: "div.Calendar-Trigger"
+  suggestions_alternative: "div.Suggest-Item"
