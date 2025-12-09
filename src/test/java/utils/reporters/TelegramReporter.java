@@ -1,5 +1,7 @@
 package utils.reporters;
 
+import ru.mydomain.utils.config.TelegramConfig;
+
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -7,10 +9,16 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class TelegramReporter {
+    private static final TelegramConfig config = TelegramConfig.getInstance();
+    private static final String BOT_TOKEN = config.getTestBotToken();
+    private static final String CHAT_ID = config.getTestChatId();
 
-    private static final String BOT_TOKEN = TestTelegramConfig.getBotToken();
-    private static final String CHAT_ID = TestTelegramConfig.getChatId();
-
+    static {
+        System.out.println("=== TelegramReporter инициализация ===");
+        System.out.println("Chat ID: " + CHAT_ID);
+        System.out.println("Токен: " + maskToken(BOT_TOKEN));
+        System.out.println("===================================");
+    }
 
     /**
      * Отправляет сообщение в Telegram через HTTP API
@@ -37,6 +45,8 @@ public class TelegramReporter {
             int responseCode = conn.getResponseCode();
             if (responseCode != 200) {
                 System.err.println("❌ Telegram API вернул код: " + responseCode);
+                logErrorToFile("Telegram API error: " + responseCode + " for message: " +
+                        message.substring(0, Math.min(100, message.length())));
             } else {
                 System.out.println("✅ Отчет отправлен в Telegram");
             }
@@ -45,6 +55,7 @@ public class TelegramReporter {
 
         } catch (Exception e) {
             System.err.println("❌ Ошибка отправки в Telegram: " + e.getMessage());
+            logErrorToFile("Telegram send error: " + e.getMessage());
         }
     }
 
@@ -60,12 +71,16 @@ public class TelegramReporter {
         }
     }
 
-
     /**
      * Отправляет скриншот в Telegram
      */
     public static void sendScreenshot(byte[] screenshot, String caption) {
         try {
+            if (screenshot == null || screenshot.length == 0) {
+                System.err.println("⚠️ Скриншот пустой, отправка пропущена");
+                return;
+            }
+
             String urlString = "https://api.telegram.org/bot" + BOT_TOKEN + "/sendPhoto";
 
             URL url = new URL(urlString);
@@ -106,12 +121,53 @@ public class TelegramReporter {
 
             if (responseCode == 200) {
                 System.out.println("✅ Скриншот отправлен в Telegram!");
+            } else {
+                System.err.println("❌ Ошибка отправки скриншота: код " + responseCode);
             }
 
             conn.disconnect();
 
         } catch (Exception e) {
             System.err.println("❌ Ошибка отправки скриншота: " + e.getMessage());
+            logErrorToFile("Screenshot send error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Логирование ошибок в файл
+     */
+    private static void logErrorToFile(String error) {
+        try {
+            java.nio.file.Files.writeString(
+                    java.nio.file.Paths.get("telegram_errors.log"),
+                    java.time.LocalDateTime.now() + " - " + error + "\n",
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.APPEND
+            );
+        } catch (Exception e) {
+            // Игнорируем ошибку логирования
+        }
+    }
+
+    /**
+     * Маскировка токена для безопасного логирования
+     */
+    private static String maskToken(String token) {
+        if (token == null || token.length() < 10) return "***";
+        return token.substring(0, 3) + "..." + token.substring(token.length() - 3);
+    }
+
+    /**
+     * Проверка работоспособности репортера
+     */
+    public static boolean testConnection() {
+        try {
+            sendSimpleMessage("🔄 Тестовое сообщение от TelegramReporter\n" +
+                    "Если вы это видите - репортер работает корректно!");
+            return true;
+        } catch (Exception e) {
+            System.err.println("❌ Тест соединения провален: " + e.getMessage());
+            return false;
         }
     }
 }

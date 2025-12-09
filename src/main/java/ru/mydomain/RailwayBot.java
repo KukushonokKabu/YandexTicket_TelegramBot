@@ -25,11 +25,15 @@ public class RailwayBot extends TelegramLongPollingBot {
     private final ConcurrentHashMap<Long,UserSession>userSessions = new ConcurrentHashMap<>();
     private final SeleniumService seleniumService;
     private final String botToken;
+    private final String botUsername;
 
-    public RailwayBot(String botToken){
+    public RailwayBot(String botToken,String botUsername){
         this.botToken = botToken;
         this.seleniumService = new SeleniumService();
         this.seleniumService.initDriver(false);
+        this.botUsername = botUsername;
+
+        System.out.println("Бот инициализирован: "+botUsername);
     }
     @Override
     public void onUpdateReceived(Update update){

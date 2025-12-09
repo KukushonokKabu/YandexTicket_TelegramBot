@@ -1,10 +1,10 @@
 package utils.reporters;
 
-import core.BaseTest;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
 import io.qameta.allure.Description;
 import pages.models.TrainInfo;
+import ru.mydomain.utils.config.TelegramConfig;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -19,8 +19,9 @@ import static utils.reporters.TelegramReporter.sendScreenshot;
 
 public class DetailedTelegramReporter {
 
-    private static final String BOT_TOKEN = TestTelegramConfig.getBotToken();
-    private static final String CHAT_ID = TestTelegramConfig.getChatId();
+    private static final TelegramConfig config = TelegramConfig.getInstance();
+    private static final String BOT_TOKEN = config.getTestBotToken();
+    private static final String CHAT_ID = config.getTestChatId();
 
     /**
      * Детальный отчет с шагами тестирования

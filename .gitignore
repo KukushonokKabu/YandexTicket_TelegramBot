@@ -36,3 +36,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Конфигурация
+.env
+.env.local
+telegram.properties
+test-telegram.properties
