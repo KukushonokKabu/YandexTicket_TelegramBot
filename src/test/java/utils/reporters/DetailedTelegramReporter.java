@@ -1,5 +1,6 @@
 package utils.reporters;
 
+import core.TestContext;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
 import io.qameta.allure.Description;
@@ -14,6 +15,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static utils.reporters.TelegramReporter.sendScreenshot;
 
@@ -22,75 +25,58 @@ public class DetailedTelegramReporter {
     private static final TelegramConfig config = TelegramConfig.getInstance();
     private static final String BOT_TOKEN = config.getTestBotToken();
     private static final String CHAT_ID = config.getTestChatId();
+    private static final Logger log = LoggerFactory.getLogger(DetailedTelegramReporter.class);
 
     /**
      * Детальный отчет с шагами тестирования
      */
     public static void sendAllureDetailedReport(ITestContext context, long durationMs) {
+
         try {
             StringBuilder report = new StringBuilder();
 
-            report.append("🧪 <b>Yandex Tickets - Детальный отчет по тестам</b>\n\n");
+            report.append("🧪 <b>Yandex Tickets - Отчет по тестам</b>\n\n");
 
-            // Общая статистика
+            // Статистика
             int passed = context.getPassedTests().size();
             int failed = context.getFailedTests().size();
             int skipped = context.getSkippedTests().size();
             int total = passed + failed + skipped;
             double successRate = total > 0 ? (passed * 100.0 / total) : 0;
 
-            report.append("📊 <b>Общая статистика:</b>\n");
-            report.append("✅ Успешно: <b>").append(passed).append("</b>\n");
-            report.append("❌ Упало: <b>").append(failed).append("</b>\n");
-            report.append("⏸️ Пропущено: <b>").append(skipped).append("</b>\n");
-            report.append("📋 Всего: <b>").append(total).append("</b>\n");
-            report.append("🎯 Успешность: <code>").append(String.format("%.1f", successRate)).append("%</code>\n\n");
+            report.append("📊 <b>Статистика:</b>\n");
+            report.append("✅ Успешно: ").append(passed).append("\n");
+            report.append("❌ Упало: ").append(failed).append("\n");
+            report.append("⏸️ Пропущено: ").append(skipped).append("\n");
+            report.append("📋 Всего: ").append(total).append("\n");
+            report.append("🎯 Успешность: ").append(String.format("%.1f", successRate)).append("%\n\n");
 
-            // Детали по каждому тесту
-            report.append("🔍 <b>Детали выполнения тестов:</b>\n\n");
+            // Детали тестов
+            report.append("🔍 <b>Детали:</b>\n\n");
 
-            // Прошедшие тесты
-            if (!context.getPassedTests().getAllResults().isEmpty()) {
-                report.append("✅ <b>Успешно выполненные тесты:</b>\n");
-                context.getPassedTests().getAllResults().forEach(result -> {
-                    addTestDetails(report, result, "✅");
-                });
-                report.append("\n");
-            }
+            // Успешные тесты
+            context.getPassedTests().getAllResults().forEach(result -> {
+                addTestDetails(report, result, "✅");
+            });
 
             // Упавшие тесты
-            if (!context.getFailedTests().getAllResults().isEmpty()) {
-                report.append("❌ <b>Упавшие тесты:</b>\n");
-                context.getFailedTests().getAllResults().forEach(result -> {
-                    addTestDetails(report, result, "❌");
-                });
-                report.append("\n");
-            }
+            context.getFailedTests().getAllResults().forEach(result -> {
+                addTestDetails(report, result, "❌");
+            });
 
             // Пропущенные тесты
-            if (!context.getSkippedTests().getAllResults().isEmpty()) {
-                report.append("⏸️ <b>Пропущенные тесты:</b>\n");
-                context.getSkippedTests().getAllResults().forEach(result -> {
-                    addTestDetails(report, result, "⏸️");
-                });
-                report.append("\n");
-            }
+            context.getSkippedTests().getAllResults().forEach(result -> {
+                addTestDetails(report, result, "⏸️");
+            });
 
             // Время выполнения
-            report.append("⏱️ <b>Общее время выполнения:</b> ")
-                    .append(formatDuration(durationMs)).append("\n");
+            report.append("⏱️ <b>Время:</b> ").append(formatDuration(durationMs)).append("\n");
+            report.append("📅 ").append(new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date()));
 
-            // Дата запуска
-            report.append("📅 <b>Дата запуска:</b> ")
-                    .append(new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date())).append("\n\n");
-
-            report.append("<i>Для полного отчета с детальными шагами откройте Allure</i> 📋");
-
-            sendTelegramMessage(report.toString());
+            TelegramReporter.sendTelegramMessage(report.toString());
 
         } catch (Exception e) {
-            System.err.println("❌ Ошибка отправки детального отчета: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Ошибка отправки отчета", e);
         }
     }
 
@@ -99,29 +85,24 @@ public class DetailedTelegramReporter {
      */
     private static void addTestDetails(StringBuilder report, ITestResult result, String status) {
         String testName = result.getMethod().getMethodName();
-        String description = getTestDescription(result);
 
         report.append(status).append(" <b>").append(testName).append("</b>\n");
 
-        if (description != null && !description.isEmpty()) {
-            report.append("   📝 ").append(description).append("\n");
+        // ВСЕГДА добавляем данные о поезде, если они есть
+        TrainInfo trainInfo = TestContext.getTrainInfo();
+        if (trainInfo != null) {
+            report.append("   🚂 <b>Поезд:</b> ").append(trainInfo.getTrainNumber()).append("\n");
+            report.append("   🚃 <b>Вагон:</b> ").append(trainInfo.getCarriageNumber()).append("\n");
+            report.append("   💺 <b>Место:</b> ").append(trainInfo.getPlace()).append("\n");
+            report.append("   💰 <b>Цена:</b> ").append(trainInfo.getPrice()).append("\n");
         }
 
-        // Добавляем информацию о проверках на основе имени теста
-        addTestSpecificDetails(report, testName, result);
-
-        // Добавляем ошибку если тест упал
+        // Ошибка для упавших тестов
         if (status.equals("❌") && result.getThrowable() != null) {
             String error = result.getThrowable().getMessage();
             if (error != null) {
-                report.append("   💥 <b>Ошибка:</b> ").append(shortenError(error)).append("\n");
+                report.append("   💥 ").append(shortenError(error)).append("\n");
             }
-        }
-
-        // Добавляем время выполнения теста
-        long testDuration = result.getEndMillis() - result.getStartMillis();
-        if (testDuration > 0) {
-            report.append("   ⏱️ <b>Время:</b> ").append(formatTestDuration(testDuration)).append("\n");
         }
 
         report.append("\n");
@@ -139,6 +120,8 @@ public class DetailedTelegramReporter {
             return "";
         }
     }
+
+
 
     /**
      * Добавляет специфичные детали для каждого типа теста
@@ -218,6 +201,31 @@ public class DetailedTelegramReporter {
                     report.append("   ").append(testData.replace("\n", "\n   ")).append("\n");
                 }
                 break;
+            case "testSearchWithDateSelectionAndRetry":
+                report.append("   🔍 <b>Проверка:</b> Полный сценарий поиска с выбором даты из календаря c retry\n");
+                report.append("   ✅ <b>Результат:</b> Пользовательский сценарий выполнен успешно\n");
+                report.append("   🎯 <b>Действия:</b> Заполнение города отправления и назначения , выбор даты отправления , нажатие кнопки поиска, переход на страницу результатов,сбор результатов\n");
+
+                if (trainInfo != null) {
+                    report.append("\n");
+                    report.append("   🎫 <b>Собранные данные:</b>\n");
+                    report.append("   🚂 <b>Поезд:</b> ").append(trainInfo.getTrainNumber()).append("\n");
+                    report.append("   📍 <b>Вагон:</b> ").append(trainInfo.getCarriageNumber()).append("\n");
+                    report.append("   🪑 <b>Место:</b> ").append(trainInfo.getPlace()).append("\n");
+                    report.append("   💰 <b>Цена:</b> ").append(trainInfo.getPrice()).append("\n");
+                    report.append("   📅 <b>Отправление:</b> ").append(trainInfo.getDateDeparture()).append(" ").append(trainInfo.getDepartureTime()).append("\n");
+                    report.append("   🏁 <b>Прибытие:</b> ").append(trainInfo.getDateArrival()).append(" ").append(trainInfo.getArrivalTime()).append("\n");
+                    report.append("   ⏳ <b>В пути:</b> ").append(trainInfo.getTravelTime()).append("\n");
+                    report.append("   \uD83D\uDE86 <b>Рейс:</b> ").append(trainInfo.getDepartureAndArrivalCity()).append("\n");
+                    report.append("   \uD83C\uDFC1 <b>Станция отправления:</b> ").append(trainInfo.getDepartureStation()).append("\n");
+                    report.append("   ✅ <b>Станция прибытия:</b> ").append(trainInfo.getArrivalStation()).append("\n");
+                } else if (testData != null) {
+                    report.append("\n");
+                    report.append("   📋 <b>Данные теста:</b>\n");
+                    report.append("   ").append(testData.replace("\n", "\n   ")).append("\n");
+                }
+                break;
+
 
             default:
                 if (testName.contains("Page") || testName.contains("Elements")) {
@@ -244,11 +252,13 @@ public class DetailedTelegramReporter {
         return error;
     }
 
-    private static String formatDuration(long milliseconds) {
-        long minutes = (milliseconds / 1000) / 60;
-        long seconds = (milliseconds / 1000) % 60;
-        return minutes > 0 ? String.format("%d мин %d сек", minutes, seconds) : String.format("%d сек", seconds);
+    private static String formatDuration(long ms) {
+        long sec = ms / 1000;
+        long min = sec / 60;
+        sec = sec % 60;
+        return min > 0 ? String.format("%d мин %d сек", min, sec) : String.format("%d сек", sec);
     }
+
 
     private static String formatTestDuration(long milliseconds) {
         long seconds = milliseconds / 1000;

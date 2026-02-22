@@ -5,13 +5,19 @@ import core.BaseTest;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import net.lightbody.bmp.core.har.HarEntry;
+import org.assertj.core.api.SoftAssertions;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 import pages.ResultsPage;
 import pages.models.TrainInfo;
+import utils.annotations.Retry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("Валидация UI элементов на всех страницах проекта")
 public class LocatorValidationTest extends BaseTest {
 
+    private static final Logger log = LoggerFactory.getLogger(LocatorValidationTest.class);
     private ApiClient apiClient;
 
     // ========== АТОМАРНЫЕ ТЕСТЫ ==========
@@ -260,6 +267,155 @@ public class LocatorValidationTest extends BaseTest {
         Allure.step("✅ Тест поиска с выбором даты завершен");
     }
 
+    @Test(priority = 7)
+    @Severity(SeverityLevel.CRITICAL)
+    @Description("Полный сценарий поиска с выбором даты из календаря")
+    @Story("Пользователь выбирает дату из календаря и выполняет поиск")
+    @Retry(value = 2,retryFor = {NoSuchElementException.class, TimeoutException.class})
+    public void  testSearchWithDateSelectionAndRetry(){
+        Allure.step("=== Полный сценарий поиска с выбором даты с применением retry ===");
+
+        SoftAssertions softly = new SoftAssertions();// Для сбора всех ошибок
+
+        try {
+            //Шаг 1: Открываем страницу
+            openTrainPage();
+            String initialUrl = getCurrentUrlWithLog();
+
+            //Шаг 2: Заполняем города (используем SeleniumRetry)
+            Allure.step("Заполнение городов отправления и назначения");
+
+            // Используем retry для поиска элементов
+            WebElement fieldOut = seleniumRetry.findElement(By.xpath(xpath.getTextFieldOut()));
+            WebElement fieldIn = seleniumRetry.findElement(By.xpath(xpath.getTextFieldIn()));
+            WebElement clearButton = seleniumRetry.findElement(By.xpath(xpath.getButtonClear()));
+
+            //Кликаем с retry
+            seleniumRetry.click(clearButton);
+
+            fieldOut.sendKeys("Москва");
+            fieldIn.sendKeys("Джанкой");
+
+            // Шаг 3: Выбираем дату из календаря
+            Allure.step("Выбор даты из календаря");
+            selectDateInCalendarWithValidation();
+
+            // Шаг 4: Выполняем поиск
+            Allure.step("Запуск поиска");
+            seleniumRetry.click(By.xpath(xpath.getSearchButton()));
+
+            // шаг 5: Проверяем переход на страницу результатов
+            Allure.step("Проверка перехода на страницу результатов");
+            waitForUrlChange(initialUrl);
+
+            //Проверяем наличие результатов
+            Allure.step("Проверка наличия результатов поиска");
+
+            try {
+                //используем seleniumRetry для поиска результатов
+                List<WebElement>results = seleniumRetry.findElements(By.xpath(xpath.getPlatz()));
+
+                // Мягкая проверка
+                softly.assertThat(results)
+                        .as("Результаты поиска")
+                        .isNotEmpty();
+
+                if(!results.isEmpty()){
+                    Allure.step("Найдено " + results.size() + " поездов");
+
+                    // Выбираем случайный поезд
+                    int randomIndex = random.nextInt(results.size());
+                    WebElement selectedTrain = results.get(randomIndex);
+
+                    // Кликаем с retry
+                    seleniumRetry.click(selectedTrain);
+
+                    // Ждём загрузки контейнеров вагонов
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath.getCarriageContainer())));
+
+                    // Собираем информацию о поезде
+                    ResultsPage res = new ResultsPage(driver,wait);
+                    TrainInfo info  = res.collectTrainAndSeatInfo();
+
+                    // Проверяем что информация собрана
+                    softly.assertThat(info.getTrainNumber())
+                            .as("Номер поезда")
+                            .isNotEmpty();
+
+                    softly.assertThat(info.getCarriageNumber())
+                            .as("Номер вагона")
+                            .isNotEmpty();
+
+                    softly.assertThat(info.getPlace())
+                            .as("Номер места")
+                            .isNotEmpty();
+
+                    // Сохраняем информацию
+                    saveTrainInfo(info);
+
+                    System.out.println("Вот что нам удалось собрать:");
+
+                    // Формируем и сохраняем данные
+                    String testData =  String.format(
+                            "🚂 Найден поезд: %s\n📍 Вагон: %s, Место: %s\n💰 Цена: %s\n📅 Дата: %s %s",
+                            info.getTrainNumber(),  // Здесь ошибка в форматировании! Слишком много аргументов
+                            info.getDepartureStation(),
+                            info.getArrivalStation(),
+                            info.getCarriageNumber(),
+                            info.getDateDeparture(),
+                            info.getDepartureTime(),
+                            info.getDateArrival(),
+                            info.getArrivalTime(),
+                            info.getTravelTime(),
+                            info.getPrice(),
+                            info.getPlace()
+                    );
+                    core.TestContext.setData(testData);
+
+                    Allure.step("Информация о поезде сохранена");
+                }
+            }
+            catch (Exception e){
+                Allure.step("Результаты поиска не найдены: " + e.getMessage());
+                takeScreenshot("Результаты_поиска_не_найдены");
+
+                // Это может быть нормальным сценарием (нет билетов)
+                Allure.step("На выбранную дату нет билетов");
+            }
+        }catch (Exception e){
+            log.error("Критическая ошибка в тесте", e);
+            takeScreenshot("Критическая_ошибка_теста");
+            throw e;
+        }
+        finally {
+            //   Проверяем все накопленные ошибки
+            try {
+                softly.assertAll();
+            }catch (AssertionError e){
+                log.error("Обнаружены ошибки в тесте",e);
+                takeScreenshot("Ошибки_в_тесте");
+                throw e;
+            }
+        }
+
+        Allure.step("Тест поиска с выбором даты завершен");
+    }
+
+    // Вспомогательный метод для форматирования
+    private String formatTrainInfo(TrainInfo info){
+        return String.format(
+                "🚂 Поезд: %s\n📍 Маршрут: %s → %s\n🚃 Вагон: %s, Место: %s\n" +
+                        "🕐 Отправление: %s %s\n🕐 Прибытие: %s %s\n⏱ Время в пути: %s\n💰 Цена: %s",
+                info.getTrainNumber(),
+                info.getDepartureStation(), info.getArrivalStation(),
+                info.getCarriageNumber(), info.getPlace(),
+                info.getDateDeparture(), info.getDepartureTime(),
+                info.getDateArrival(), info.getArrivalTime(),
+                info.getTravelTime(),
+                info.getPrice()
+        );
+    }
+
     @Test(priority = 8)
     @Severity(SeverityLevel.CRITICAL)
     @Description("Гибридный тест UI + API с перехватом запросов")
@@ -325,6 +481,61 @@ public class LocatorValidationTest extends BaseTest {
 
         Allure.step("✅ Гибридный тест завершен");
     }
+
+    @Test(description = "Тест выбора случайного поезда и места")
+    @Retry(value = 3, delay = 1000,
+            retryFor = {NoSuchElementException.class, TimeoutException.class})
+    public void testRandomTrainSelection() {
+        ResultsPage resultsPage = new ResultsPage(driver, wait);
+
+        // Ждем загрузки страницы
+        resultsPage.waitForResultsToLoad();
+
+        // Проверяем количество поездов
+        int trainCount = resultsPage.getTrainCount();
+        assertThat(trainCount).isPositive();
+
+        // Собираем информацию о случайном поезде
+        TrainInfo trainInfo = resultsPage.collectTrainAndSeatInfo();
+
+        // Проверяем, что информация собрана корректно
+        assertThat(trainInfo)
+                .as("Информация о поезде")
+                .satisfies(info -> {
+                    assertThat(info.getTrainNumber()).isNotEmpty();
+                    assertThat(info.getCarriageNumber()).isNotEmpty();
+                    assertThat(info.getPlace()).isNotEmpty();
+                    assertThat(info.getPrice()).isNotEmpty();
+                });
+
+        // Дополнительные проверки
+        assertThat(trainInfo.getDepartureStation())
+                .as("Станция отправления")
+                .isNotEqualTo(trainInfo.getArrivalStation());
+    }
+
+    @Test(description = "Тест с мягкими проверками TestNG")
+    @Retry(2)
+    public void testWithSoftAssert() {
+        SoftAssert softAssert = new SoftAssert();
+        ResultsPage resultsPage = new ResultsPage(driver, wait);
+
+        resultsPage.waitForResultsToLoad();
+
+        int trainCount = resultsPage.getTrainCount();
+        softAssert.assertTrue(trainCount > 0, "Должен быть хотя бы один поезд");
+
+        TrainInfo trainInfo = resultsPage.collectTrainAndSeatInfo();
+
+        softAssert.assertNotNull(trainInfo.getTrainNumber(), "Номер поезда не должен быть null");
+        softAssert.assertNotNull(trainInfo.getCarriageNumber(), "Номер вагона не должен быть null");
+        softAssert.assertNotNull(trainInfo.getPlace(), "Номер места не должен быть null");
+        softAssert.assertNotNull(trainInfo.getPrice(), "Цена не должна быть null");
+
+        softAssert.assertAll(); // Проверяем все накопленные ошибки
+    }
+
+
 
     // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========
 

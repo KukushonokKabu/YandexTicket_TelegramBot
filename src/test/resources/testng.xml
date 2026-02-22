@@ -1,0 +1,20 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Train Tests Suite">
+
+    <listeners>
+        <!-- Добавляем Transformer для поддержки аннотации @Retry -->
+        <listener class-name="core.listeners.RetryTransformer"/>
+    </listeners>
+
+    <listeners>
+        <listener class-name="core.listeners.ContextCleanupListener"/>
+        <listener class-name="core.listeners.TestLifecycleListener"/>
+        <listener class-name="utils.reporters.DetailedTelegramReporter"/>
+    </listeners>
+
+    <test name="Train Selection Tests">
+        <classes>
+            <class name="tests.atomic.LocatorValidationTest"/>
+        </classes>
+    </test>
+</suite>

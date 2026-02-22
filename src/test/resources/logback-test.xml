@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Консольный аппендер с красивым форматированием -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Файловый аппендер для детальных логов -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/tests.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Отключаем ненужные логгеры -->
+    <logger name="org.openqa.selenium" level="WARN"/>
+    <logger name="io.github.bonigarcia" level="WARN"/>
+    <logger name="org.apache" level="WARN"/>
+    <logger name="httpclient" level="WARN"/>
+
+    <!-- Наш логгер - показываем INFO и выше -->
+    <logger name="core" level="INFO"/>
+    <logger name="pages" level="INFO"/>
+    <logger name="utils" level="INFO"/>
+    <logger name="tests" level="INFO"/>
+
+    <!-- Корневой логгер -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
