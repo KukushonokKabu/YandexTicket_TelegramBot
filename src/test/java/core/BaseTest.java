@@ -91,14 +91,30 @@ public abstract class BaseTest {
     @AfterSuite
     public void afterSuite(ITestContext context) {
         long duration = System.currentTimeMillis() - suiteStartTime;
-        System.out.println("📊 Завершение тестовой серии, длительность: " + duration + "ms");
 
-        // Отправка отчета в Telegram
+        // Форматирование длительности для вывода в консоль
+        String formattedDuration = formatDuration(duration);
+
+        System.out.println("📊 Завершение тестовой серии, длительность: " + formattedDuration);
+
+        // Отправка отчета в Telegram (передаем только duration в миллисекундах и screenshot)
         DetailedTelegramReporter.sendCompleteReport(
                 context,
-                duration,
-                TestContext.getScreenshot()
+                duration,  // оставляем миллисекунды для совместимости с API
+                TestContext.getScreenshot()  // это byte[]
         );
+    }
+
+    private String formatDuration(long millis) {
+        long totalSeconds = millis / 1000;
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+
+        if (minutes > 0) {
+            return String.format("%d мин %d сек", minutes, seconds);
+        } else {
+            return String.format("%d сек", seconds);
+        }
     }
 
     // ========== БАЗОВЫЕ МЕТОДЫ ДЛЯ ВСЕХ ТЕСТОВ ==========

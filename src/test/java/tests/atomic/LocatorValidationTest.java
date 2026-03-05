@@ -135,6 +135,7 @@ public class LocatorValidationTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Полный сценарий поиска с выбором даты из календаря")
     @Story("Пользователь выбирает дату из календаря и выполняет поиск")
+    @Retry(value = 3,delay = 500)
     public void testSearchWithDateSelection() {
         Allure.step("=== ПОЛНЫЙ СЦЕНАРИЙ ПОИСКА С ВЫБОРОМ ДАТЫ ===");
 
@@ -353,7 +354,7 @@ public class LocatorValidationTest extends BaseTest {
                     // Сохраняем информацию
                     saveTrainInfo(info);
 
-                    System.out.println("Вот что нам удалось собрать:");
+                    System.out.println("Информация сохранена, отчет отправлен в Telegram");
 
                     // Формируем и сохраняем данные
                     String testData =  String.format(
@@ -401,20 +402,20 @@ public class LocatorValidationTest extends BaseTest {
         Allure.step("Тест поиска с выбором даты завершен");
     }
 
-    // Вспомогательный метод для форматирования
-    private String formatTrainInfo(TrainInfo info){
-        return String.format(
-                "🚂 Поезд: %s\n📍 Маршрут: %s → %s\n🚃 Вагон: %s, Место: %s\n" +
-                        "🕐 Отправление: %s %s\n🕐 Прибытие: %s %s\n⏱ Время в пути: %s\n💰 Цена: %s",
-                info.getTrainNumber(),
-                info.getDepartureStation(), info.getArrivalStation(),
-                info.getCarriageNumber(), info.getPlace(),
-                info.getDateDeparture(), info.getDepartureTime(),
-                info.getDateArrival(), info.getArrivalTime(),
-                info.getTravelTime(),
-                info.getPrice()
-        );
-    }
+//    // Вспомогательный метод для форматирования
+//    private String formatTrainInfo(TrainInfo info){
+//        return String.format(
+//                "🚂 Поезд: %s\n📍 Маршрут: %s → %s\n🚃 Вагон: %s, Место: %s\n" +
+//                        "🕐 Отправление: %s %s\n🕐 Прибытие: %s %s\n⏱ Время в пути: %s\n💰 Цена: %s",
+//                info.getTrainNumber(),
+//                info.getDepartureStation(), info.getArrivalStation(),
+//                info.getCarriageNumber(), info.getPlace(),
+//                info.getDateDeparture(), info.getDepartureTime(),
+//                info.getDateArrival(), info.getArrivalTime(),
+//                info.getTravelTime(),
+//                info.getPrice()
+//        );
+//    }
 
     @Test(priority = 8)
     @Severity(SeverityLevel.CRITICAL)
